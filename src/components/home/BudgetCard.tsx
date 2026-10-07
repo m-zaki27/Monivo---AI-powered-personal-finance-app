@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { AlertTriangle, CircleAlert, Target } from 'lucide-react-native';
 import { View } from 'react-native';
 
@@ -45,7 +46,7 @@ export function BudgetCard({ summary, error, onRetry, currency, hidden }: Budget
   const StatusIcon = status.icon;
 
   return (
-    <Card className="gap-4">
+    <Card className="gap-4" onPress={() => router.push('/budget')} accessibilityLabel={`Monthly budget, ${pct}% used. Opens budget settings`}>
       <View className="flex-row items-start justify-between">
         <View className="gap-1">
           <Text variant="caption" tone="muted">

@@ -68,6 +68,8 @@ export function deleteAccount(id: string) {
   return respond(() => {
     const target = db.accounts.find((a) => a.id === id);
     if (!target) throw new ApiError('Account not found', 404);
+    // Every transaction needs an account, so the last one can't go.
+    if (db.accounts.length === 1) throw new ApiError('You need at least one account. Add another before deleting this one.', 409);
     db.accounts = db.accounts.filter((a) => a.id !== id);
     db.transactions = db.transactions.filter((t) => t.accountId !== id);
     if (target.isDefault && db.accounts[0]) db.accounts[0].isDefault = true;

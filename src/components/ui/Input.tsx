@@ -75,7 +75,7 @@ export function Input({
             setFocused(false);
             onBlur?.(e);
           }}
-          className={cn('h-full flex-1 font-medium text-base text-ink', className)}
+          className={cn('h-full min-w-0 flex-1 font-medium text-base text-ink', className)}
           {...rest}
         />
         {secureTextEntry && (

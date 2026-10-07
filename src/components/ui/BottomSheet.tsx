@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { AnimatedView } from '@/lib/animated';
+import { ThemeScope } from '@/theme/ThemeProvider';
 import { useTheme } from '@/theme/useTheme';
 import { motion } from '@/theme/tokens';
 
@@ -32,7 +33,7 @@ const DISMISS_VELOCITY = 900;
  */
 export function BottomSheet({ visible, onClose, title, subtitle, children }: BottomSheetProps) {
   const insets = useSafeAreaInsets();
-  const { colors, shadow } = useTheme();
+  const { colors, shadow, scheme } = useTheme();
   const [mounted, setMounted] = useState(visible);
   const translateY = useSharedValue(SCREEN_H);
   const backdrop = useSharedValue(0);
@@ -71,33 +72,37 @@ export function BottomSheet({ visible, onClose, title, subtitle, children }: Bot
     <Modal transparent visible statusBarTranslucent navigationBarTranslucent animationType="none" onRequestClose={onClose}>
       {/* Gestures inside a Modal need their own root on Android. */}
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <AnimatedView className="absolute inset-0 bg-scrim" style={backdropStyle}>
-          <Pressable className="flex-1" onPress={onClose} accessibilityLabel="Close sheet" />
-        </AnimatedView>
-        <View className="flex-1 justify-end" pointerEvents="box-none">
-          <GestureDetector gesture={pan}>
-            <AnimatedView
-              accessibilityViewIsModal
-              className="rounded-t-sheet border border-line bg-surface px-6 pt-3"
-              style={[{ paddingBottom: insets.bottom + 24, boxShadow: shadow.raised }, sheetStyle]}
-            >
-              <View className="mb-4 items-center">
-                <View className="h-1.5 w-10 rounded-full" style={{ backgroundColor: colors.border }} />
-              </View>
-              {title && (
-                <View className="mb-4 gap-1">
-                  <Text variant="h2">{title}</Text>
-                  {subtitle && (
-                    <Text variant="bodySm" tone="muted">
-                      {subtitle}
-                    </Text>
-                  )}
+        {/* On web a Modal is portalled outside the app's DOM tree, so the theme's
+            CSS variables don't reach it. Re-applying the scope fixes bg-surface etc. */}
+        <ThemeScope scheme={scheme} style={{ flex: 1 }}>
+          <AnimatedView className="absolute inset-0 bg-scrim" style={backdropStyle}>
+            <Pressable className="flex-1" onPress={onClose} accessibilityLabel="Close sheet" />
+          </AnimatedView>
+          <View className="flex-1 justify-end" pointerEvents="box-none">
+            <GestureDetector gesture={pan}>
+              <AnimatedView
+                accessibilityViewIsModal
+                className="rounded-t-sheet border border-line bg-surface px-6 pt-3"
+                style={[{ paddingBottom: insets.bottom + 24, boxShadow: shadow.raised }, sheetStyle]}
+              >
+                <View className="mb-4 items-center">
+                  <View className="h-1.5 w-10 rounded-full" style={{ backgroundColor: colors.border }} />
                 </View>
-              )}
-              {children}
-            </AnimatedView>
-          </GestureDetector>
-        </View>
+                {title && (
+                  <View className="mb-4 gap-1">
+                    <Text variant="h2">{title}</Text>
+                    {subtitle && (
+                      <Text variant="bodySm" tone="muted">
+                        {subtitle}
+                      </Text>
+                    )}
+                  </View>
+                )}
+                {children}
+              </AnimatedView>
+            </GestureDetector>
+          </View>
+        </ThemeScope>
       </GestureHandlerRootView>
     </Modal>
   );

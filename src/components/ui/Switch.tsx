@@ -10,6 +10,9 @@ export function Switch({ onValueChange, ...rest }: SwitchProps) {
     <RNSwitch
       trackColor={{ false: colors.raised, true: colors.secondary }}
       thumbColor={palette.white}
+      // react-native-web ignores thumbColor when on and uses its own teal
+      // (`activeThumbColor`), which isn't in RN's types, hence the cast.
+      {...({ activeThumbColor: palette.white } as object)}
       ios_backgroundColor={colors.raised}
       onValueChange={(v) => {
         haptics.select();
