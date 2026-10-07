@@ -10,10 +10,23 @@ export function useMe() {
   return useQuery({ queryKey: queryKeys.me, queryFn: userApi.getMe });
 }
 
+/**
+ * Optimistic: switches in Settings flip instantly. If the save fails we put
+ * the previous user back, so the switch visibly flips back too.
+ */
 export function useUpdateMe() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (patch: Partial<Omit<User, 'id'>>) => userApi.updateMe(patch),
+    onMutate: async (patch) => {
+      await qc.cancelQueries({ queryKey: queryKeys.me });
+      const previous = qc.getQueryData<User>(queryKeys.me);
+      if (previous) qc.setQueryData<User>(queryKeys.me, { ...previous, ...patch });
+      return { previous };
+    },
+    onError: (_e, _patch, ctx) => {
+      if (ctx?.previous) qc.setQueryData(queryKeys.me, ctx.previous);
+    },
     onSuccess: (user) => qc.setQueryData(queryKeys.me, user),
   });
 }

@@ -6,6 +6,7 @@ import { Platform, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { PressableScale } from '@/components/ui';
+import { useKeyboardVisible } from '@/hooks/useKeyboardVisible';
 import { withAlpha } from '@/lib/color';
 import { useTheme } from '@/theme/useTheme';
 
@@ -29,6 +30,11 @@ export function TabBar({ state, navigation }: TabBarProps) {
   const insets = useSafeAreaInsets();
   const { colors, isDark, shadow } = useTheme();
   const [sheetOpen, setSheetOpen] = useState(false);
+  const keyboardUp = useKeyboardVisible();
+
+  // Typing (e.g. in the Assistant) needs the space, and on Android the floating
+  // bar would otherwise ride up on top of the keyboard.
+  if (keyboardUp) return null;
 
   return (
     <>

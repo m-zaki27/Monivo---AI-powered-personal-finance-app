@@ -139,6 +139,14 @@ export function confirmMfaSetup(code: string) {
   });
 }
 
+export function disableMfa() {
+  return respond(() => {
+    db.user.mfaEnabled = false;
+    db.auth = { mfaSecret: null, backupCodes: [] };
+    return db.user;
+  });
+}
+
 export function getBackupCodes() {
   return respond(() => db.auth.backupCodes);
 }

@@ -65,3 +65,14 @@ export function useCompleteOnboarding() {
     },
   });
 }
+
+export function useDisableMfa() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: authApi.disableMfa,
+    onSuccess: (user) => {
+      qc.setQueryData(queryKeys.me, user);
+      qc.setQueryData(queryKeys.auth.backupCodes, []);
+    },
+  });
+}

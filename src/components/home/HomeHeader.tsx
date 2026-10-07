@@ -13,10 +13,13 @@ export function HomeHeader({ user }: { user?: User }) {
 
   return (
     <View className="flex-row items-center gap-3 pb-6 pt-2">
-      <View
+      <Pressable
+        onPress={() => router.push('/settings')}
+        accessibilityRole="button"
+        accessibilityLabel="Profile and settings"
+        hitSlop={4}
         className="h-12 w-12 items-center justify-center rounded-full border"
         style={{ backgroundColor: withAlpha(colors.secondary, 0.16), borderColor: withAlpha(colors.secondary, 0.35) }}
-        accessibilityElementsHidden
       >
         {user ? (
           <Text weight="bold" tone="cobalt">
@@ -25,7 +28,7 @@ export function HomeHeader({ user }: { user?: User }) {
         ) : (
           <Skeleton width={48} height={48} rounded="rounded-full" />
         )}
-      </View>
+      </Pressable>
       <View className="flex-1">
         <Text variant="bodySm" tone="muted">
           {greetingFor()},

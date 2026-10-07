@@ -10,3 +10,5 @@ export * from './useCurrency';
 export * from './usePersistentState';
 export * from './useDebouncedValue';
 export * from './useAi';
+export * from './useAssistant';
+export * from './useKeyboardVisible';
