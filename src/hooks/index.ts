@@ -8,3 +8,4 @@ export * from './useCountdown';
 export * from './useSession';
 export * from './useCurrency';
 export * from './usePersistentState';
+export * from './useDebouncedValue';

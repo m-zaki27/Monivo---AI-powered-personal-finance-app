@@ -1,4 +1,6 @@
-import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
+
+import type { Transaction } from '@/schemas/models';
 
 import { transactionsApi, type NewTransaction, type TransactionFilters } from '@/services';
 
@@ -17,6 +19,9 @@ export function useTransactions(filters: TransactionFilters = {}) {
   return useQuery({
     queryKey: queryKeys.transactions.list(filters),
     queryFn: () => transactionsApi.listTransactions(filters),
+    // While a new search/filter loads, keep showing the previous results
+    // instead of flashing back to skeletons on every keystroke.
+    placeholderData: keepPreviousData,
   });
 }
 
@@ -49,11 +54,28 @@ export function useUpdateTransaction() {
   });
 }
 
+/**
+ * Optimistic delete: the row disappears instantly, before the server answers.
+ * We snapshot every cached transaction list first, so if the request fails we
+ * can put them back exactly as they were.
+ */
 export function useDeleteTransaction() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => transactionsApi.deleteTransaction(id),
-    onSuccess: () => invalidateMoney(qc),
+    onMutate: async (id) => {
+      const listKey = [...queryKeys.transactions.all, 'list'];
+      // Stop in-flight refetches from overwriting our optimistic change.
+      await qc.cancelQueries({ queryKey: listKey });
+      const snapshot = qc.getQueriesData<Transaction[]>({ queryKey: listKey });
+      qc.setQueriesData<Transaction[]>({ queryKey: listKey }, (old) => old?.filter((t) => t.id !== id));
+      return { snapshot };
+    },
+    onError: (_err, _id, context) => {
+      context?.snapshot.forEach(([key, data]) => qc.setQueryData(key, data));
+    },
+    // Success or failure, re-sync lists, balances and monthly totals with the server.
+    onSettled: () => invalidateMoney(qc),
   });
 }
 

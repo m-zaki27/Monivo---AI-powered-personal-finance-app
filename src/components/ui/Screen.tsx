@@ -21,6 +21,8 @@ interface ScreenProps {
   padded?: boolean;
   /** Skip the top safe-area inset (e.g. under a native header) */
   noTopInset?: boolean;
+  /** No bottom padding: the child (e.g. a FlatList) pads its own content so it can scroll under the tab bar */
+  noBottomInset?: boolean;
   refreshControl?: ScrollViewProps['refreshControl'];
   className?: string;
   contentClassName?: string;
@@ -38,6 +40,7 @@ export function Screen({
   withTabBar,
   padded = true,
   noTopInset,
+  noBottomInset,
   refreshControl,
   className,
   contentClassName,
@@ -66,7 +69,7 @@ export function Screen({
           {children}
         </ScrollView>
       ) : (
-        <View className={cn('flex-1', px, contentClassName)} style={{ paddingBottom: footer ? 0 : bottomPad }}>
+        <View className={cn('flex-1', px, contentClassName)} style={{ paddingBottom: footer || noBottomInset ? 0 : bottomPad }}>
           {children}
         </View>
       )}
