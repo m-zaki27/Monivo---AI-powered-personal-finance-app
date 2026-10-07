@@ -86,3 +86,15 @@ export function applyKeypadKey(current: string, key: string, maxDigits = 9): str
 export function sumCents(values: Cents[]): Cents {
   return values.reduce((a, b) => a + b, 0);
 }
+
+/**
+ * Cleans free typing in an amount field: digits and one dot, max 2 decimals.
+ * "1,2.345" → "12.34". (The keypad has applyKeypadKey; this is for TextInput.)
+ */
+export function sanitizeAmountInput(text: string, maxDigits = 9): string {
+  const cleaned = text.replace(/[^0-9.]/g, '');
+  const [whole = '', ...rest] = cleaned.split('.');
+  const w = whole.replace(/^0+(?=\d)/, '').slice(0, maxDigits);
+  if (rest.length === 0) return w;
+  return `${w || '0'}.${rest.join('').slice(0, 2)}`;
+}

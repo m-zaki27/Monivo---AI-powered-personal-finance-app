@@ -1,7 +1,59 @@
-import { PencilLine } from 'lucide-react-native';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
 
-import { PhasePlaceholder } from '@/components/PhasePlaceholder';
+import { TransactionForm, useDraftDefaults, useDrafts } from '@/components/add';
+import { Button, Header, Screen } from '@/components/ui';
+import { useCurrency } from '@/hooks';
+import {
+  draftToForm,
+  formToDraft,
+  transactionFormSchema,
+  type TransactionFormValues,
+} from '@/schemas/transactionForm';
 
+/**
+ * Two jobs: a fresh manual entry (no params), or editing any draft from the
+ * scan / voice / confirm screens (`?draftKey=…`). Same form either way.
+ */
 export default function AddManualScreen() {
-  return <PhasePlaceholder title="Add manually" phase={5} icon={PencilLine} kind="modal" />;
+  const { draftKey } = useLocalSearchParams<{ draftKey?: string }>();
+  const { drafts, setDrafts, updateDraft } = useDrafts();
+  const editing = draftKey ? drafts.find((d) => d.key === draftKey) : undefined;
+  const currency = useCurrency();
+  const defaults = useDraftDefaults();
+
+  const form = useForm<TransactionFormValues>({
+    resolver: zodResolver(transactionFormSchema),
+    defaultValues: editing ? draftToForm(editing) : defaults,
+    mode: 'onTouched',
+  });
+  const { handleSubmit, getValues, setValue } = form;
+
+  // Accounts may still be loading on first render; fill the default once it arrives.
+  useEffect(() => {
+    if (!getValues('accountId') && defaults.accountId) setValue('accountId', defaults.accountId);
+  }, [defaults.accountId, getValues, setValue]);
+
+  const submit = handleSubmit((values) => {
+    if (editing) {
+      updateDraft(formToDraft(values, editing.source, editing.key));
+      router.back();
+    } else {
+      setDrafts([formToDraft(values, 'manual')]);
+      router.push('/confirm');
+    }
+  });
+
+  return (
+    <Screen
+      scroll
+      header={<Header title={editing ? 'Edit transaction' : 'Add manually'} leading={editing ? 'back' : 'close'} />}
+      footer={<Button title={editing ? 'Save changes' : 'Continue'} onPress={submit} fullWidth />}
+      contentClassName="pt-4"
+    >
+      <TransactionForm form={form} currency={currency} />
+    </Screen>
+  );
 }

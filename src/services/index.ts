@@ -1,4 +1,5 @@
 export * as accountsApi from './accounts';
+export * as aiApi from './ai';
 export * as authApi from './auth';
 export * as budgetApi from './budget';
 export * as transactionsApi from './transactions';
@@ -8,3 +9,4 @@ export type { TransactionFilters, NewTransaction } from './transactions';
 export type { MonthSummary, CategorySpend } from './budget';
 export type { NewAccount } from './accounts';
 export type { LogInResult, MfaSetup } from './auth';
+export type { ParsedItem, ReceiptExtraction } from './ai';

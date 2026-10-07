@@ -45,6 +45,15 @@ export function useAddTransaction() {
   });
 }
 
+export function useAddTransactions() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (inputs: NewTransaction[]) => transactionsApi.createTransactions(inputs),
+    // One invalidation refreshes Home (balance, budget, donut, recent) and Transactions.
+    onSuccess: () => invalidateMoney(qc),
+  });
+}
+
 export function useUpdateTransaction() {
   const qc = useQueryClient();
   return useMutation({

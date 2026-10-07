@@ -52,6 +52,15 @@ export function createTransaction(input: NewTransaction) {
   });
 }
 
+/** Saves several at once (voice can produce more than one), in a single round trip. */
+export function createTransactions(inputs: NewTransaction[]) {
+  return respond(() => {
+    const created = inputs.map((input) => ({ ...input, id: newId('txn') }));
+    db.transactions.unshift(...created);
+    return created;
+  });
+}
+
 export function updateTransaction(id: string, patch: Partial<NewTransaction>) {
   return respond(() => {
     const i = db.transactions.findIndex((x) => x.id === id);
