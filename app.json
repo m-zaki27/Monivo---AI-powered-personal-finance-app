@@ -1,17 +1,21 @@
 {
   "expo": {
-    "name": "monivo",
+    "name": "Monivo",
     "slug": "monivo",
+    "scheme": "monivo",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
+    "backgroundColor": "#0B1020",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": false,
+      "bundleIdentifier": "com.monivo.app"
     },
     "android": {
+      "package": "com.monivo.app",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#0B1020",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -19,7 +23,37 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
+      "bundler": "metro",
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-router",
+      "expo-status-bar",
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 160,
+          "resizeMode": "contain",
+          "backgroundColor": "#0B1020"
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Monivo uses the camera to scan your receipts.",
+          "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Monivo uses the microphone so you can add transactions by voice."
+        }
+      ],
+      "expo-sharing",
+      "expo-asset"
+    ]
   }
 }
