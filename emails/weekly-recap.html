@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+<!--
+  Monivo · Weekly recap email
+  Sent every Monday morning when "Weekly recap email" is on (Settings → Notifications).
+
+  Dynamic values (filled in by the backend's templating; sample data shown):
+    firstName ............ Alex
+    weekRange ............ Oct 1 – Oct 7
+    spent / changePct .... $612.40 / -8% vs the week before
+    income ............... $2,850.00
+    budgetUsedPercent .... 64
+    topCategories[3] ..... name, amount, count, colour, barPercent (relative to the largest)
+    tips[2] .............. title, body (generated from the user's own data)
+    links ................ open app, notification settings, unsubscribe
+
+  Same rules as budget-alert.html: tables + inline styles, absolute image URLs when sent.
+-->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="x-apple-disable-message-reformatting">
+<meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
+<meta name="color-scheme" content="light dark">
+<meta name="supported-color-schemes" content="light dark">
+<title>Your week in money: Oct 1 – Oct 7</title>
+<!--[if mso]>
+<noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript>
+<style>table, td, h1, h2, p, a, span { font-family: Arial, Helvetica, sans-serif !important; }</style>
+<![endif]-->
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; padding: 0; width: 100% !important; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+  table { border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+  img { border: 0; line-height: 100%; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
+  a { text-decoration: none; }
+  @media screen and (max-width: 620px) {
+    .container { width: 100% !important; }
+    .px { padding-left: 24px !important; padding-right: 24px !important; }
+    /* Stack the three summary stats on small screens. */
+    .stat { display: block !important; width: 100% !important; padding: 0 0 12px 0 !important; }
+  }
+  @media (prefers-color-scheme: dark) {
+    .bg-page { background-color: #0B1020 !important; }
+    .bg-card { background-color: #131A2E !important; }
+    .bg-raised { background-color: #1C2540 !important; }
+    .text-ink { color: #F4F1EA !important; }
+    .text-muted { color: #8C95B0 !important; }
+    .track { background-color: #2A3556 !important; }
+    .divider { border-color: rgba(255,255,255,0.08) !important; }
+  }
+</style>
+</head>
+<body class="bg-page" style="margin:0; padding:0; background-color:#F3EFE6;">
+
+<div style="display:none; max-height:0; overflow:hidden; mso-hide:all; font-size:1px; line-height:1px; color:#F3EFE6; opacity:0;">
+  You spent $612.40 this week, 8% less than last week. Groceries led the way.&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;
+</div>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="bg-page" style="background-color:#F3EFE6;">
+  <tr>
+    <td align="center" style="padding:32px 12px;">
+
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" class="container" style="width:600px; max-width:600px;">
+
+        <!-- Header: navy, gold mark, date range, gold accent line -->
+        <tr>
+          <td style="background-color:#0E1630; border-radius:24px 24px 0 0; padding:28px 40px 32px 40px; font-family:'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;" class="px">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td style="vertical-align:middle; padding-right:10px;">
+                  <img src="assets/logo-mark-gold@2x.png" width="36" height="36" alt="Monivo" style="display:block; width:36px; height:36px;">
+                </td>
+                <td style="vertical-align:middle; font-size:22px; font-weight:800; letter-spacing:-0.5px; color:#F4F1EA;">Monivo</td>
+              </tr>
+            </table>
+            <p style="margin:28px 0 6px 0; font-size:12px; line-height:16px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; color:#F5B83D;">
+              Weekly recap · Oct 1 – Oct 7
+            </p>
+            <h1 style="margin:0; font-size:28px; line-height:36px; font-weight:800; letter-spacing:-0.6px; color:#F4F1EA;">
+              Nice week, Alex. You spent a little less.
+            </h1>
+          </td>
+        </tr>
+        <tr>
+          <td style="background-color:#F5B83D; height:4px; line-height:4px; font-size:4px;">&nbsp;</td>
+        </tr>
+
+        <!-- Body -->
+        <tr>
+          <td class="bg-card px" style="background-color:#FFFFFF; padding:32px 40px 8px 40px; font-family:'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+
+            <!-- Three stats -->
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td class="stat" width="33%" style="padding-right:8px; vertical-align:top;">
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="bg-raised" style="background-color:#F3EFE6; border-radius:16px;">
+                    <tr><td style="padding:16px;">
+                      <p class="text-muted" style="margin:0 0 4px 0; font-size:12px; line-height:16px; font-weight:600; color:#6B7390;">Spent</p>
+                      <p class="text-ink" style="margin:0; font-family:'Space Grotesk', 'Helvetica Neue', Arial, sans-serif; font-size:24px; line-height:30px; font-weight:700; letter-spacing:-0.6px; color:#14182B;">$612.40</p>
+                      <p style="margin:4px 0 0 0; font-size:12px; line-height:16px; font-weight:700; color:#0E8FB8;">&#8595; 8% vs last week</p>
+                    </td></tr>
+                  </table>
+                </td>
+                <td class="stat" width="33%" style="padding:0 4px; vertical-align:top;">
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="bg-raised" style="background-color:#F3EFE6; border-radius:16px;">
+                    <tr><td style="padding:16px;">
+                      <p class="text-muted" style="margin:0 0 4px 0; font-size:12px; line-height:16px; font-weight:600; color:#6B7390;">Income</p>
+                      <p style="margin:0; font-family:'Space Grotesk', 'Helvetica Neue', Arial, sans-serif; font-size:24px; line-height:30px; font-weight:700; letter-spacing:-0.6px; color:#0E8FB8;">$2,850</p>
+                      <p class="text-muted" style="margin:4px 0 0 0; font-size:12px; line-height:16px; color:#6B7390;">Payday on Oct 1</p>
+                    </td></tr>
+                  </table>
+                </td>
+                <td class="stat" width="33%" style="padding-left:8px; vertical-align:top;">
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="bg-raised" style="background-color:#F3EFE6; border-radius:16px;">
+                    <tr><td style="padding:16px;">
+                      <p class="text-muted" style="margin:0 0 4px 0; font-size:12px; line-height:16px; font-weight:600; color:#6B7390;">Budget</p>
+                      <p class="text-ink" style="margin:0; font-family:'Space Grotesk', 'Helvetica Neue', Arial, sans-serif; font-size:24px; line-height:30px; font-weight:700; letter-spacing:-0.6px; color:#14182B;">64%</p>
+                      <p class="text-muted" style="margin:4px 0 0 0; font-size:12px; line-height:16px; color:#6B7390;">used, on track</p>
+                    </td></tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+
+            <!-- Top 3 categories -->
+            <h2 class="text-ink" style="margin:32px 0 4px 0; font-size:18px; line-height:24px; font-weight:700; color:#14182B;">Where it went</h2>
+            <p class="text-muted" style="margin:0 0 8px 0; font-size:14px; line-height:20px; color:#6B7390;">Your top 3 categories this week</p>
+
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+              <!-- 1. Groceries -->
+              <tr>
+                <td class="divider" style="padding:14px 0; border-bottom:1px solid rgba(20,24,43,0.08);">
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                      <td width="44" style="vertical-align:middle;">
+                        <div style="width:32px; height:32px; border-radius:16px; background-color:#DDF4F7; text-align:center; font-size:14px; line-height:32px; font-weight:800; color:#0F8796;">1</div>
+                      </td>
+                      <td style="vertical-align:middle;">
+                        <p class="text-ink" style="margin:0; font-size:15px; line-height:22px; font-weight:700; color:#14182B;">Groceries</p>
+                        <p class="text-muted" style="margin:0; font-size:12px; line-height:16px; color:#6B7390;">5 transactions · Whole Foods, Trader Joe's</p>
+                      </td>
+                      <td align="right" class="text-ink" style="vertical-align:middle; font-family:'Space Grotesk', 'Helvetica Neue', Arial, sans-serif; font-size:16px; font-weight:700; color:#14182B;">$248.60</td>
+                    </tr>
+                    <tr>
+                      <td></td>
+                      <td colspan="2" style="padding-top:8px;">
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+                          <td width="100%" style="background-color:#17B7C9; height:6px; line-height:6px; font-size:6px; border-radius:999px;">&nbsp;</td>
+                        </tr></table>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <!-- 2. Transport -->
+              <tr>
+                <td class="divider" style="padding:14px 0; border-bottom:1px solid rgba(20,24,43,0.08);">
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                      <td width="44" style="vertical-align:middle;">
+                        <div style="width:32px; height:32px; border-radius:16px; background-color:#E0E9FF; text-align:center; font-size:14px; line-height:32px; font-weight:800; color:#2F6BFF;">2</div>
+                      </td>
+                      <td style="vertical-align:middle;">
+                        <p class="text-ink" style="margin:0; font-size:15px; line-height:22px; font-weight:700; color:#14182B;">Transport</p>
+                        <p class="text-muted" style="margin:0; font-size:12px; line-height:16px; color:#6B7390;">6 transactions · Uber, Lyft, Shell</p>
+                      </td>
+                      <td align="right" class="text-ink" style="vertical-align:middle; font-family:'Space Grotesk', 'Helvetica Neue', Arial, sans-serif; font-size:16px; font-weight:700; color:#14182B;">$172.15</td>
+                    </tr>
+                    <tr>
+                      <td></td>
+                      <td colspan="2" style="padding-top:8px;">
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+                          <td width="69%" style="background-color:#2F6BFF; height:6px; line-height:6px; font-size:6px; border-radius:999px 0 0 999px;">&nbsp;</td>
+                          <td class="track" width="31%" style="background-color:#EFEAE0; height:6px; line-height:6px; font-size:6px; border-radius:0 999px 999px 0;">&nbsp;</td>
+                        </tr></table>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <!-- 3. Food & Drink -->
+              <tr>
+                <td style="padding:14px 0;">
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                      <td width="44" style="vertical-align:middle;">
+                        <div style="width:32px; height:32px; border-radius:16px; background-color:#FFEEDB; text-align:center; font-size:14px; line-height:32px; font-weight:800; color:#B86A00;">3</div>
+                      </td>
+                      <td style="vertical-align:middle;">
+                        <p class="text-ink" style="margin:0; font-size:15px; line-height:22px; font-weight:700; color:#14182B;">Food &amp; Drink</p>
+                        <p class="text-muted" style="margin:0; font-size:12px; line-height:16px; color:#6B7390;">9 transactions · Starbucks, Chipotle</p>
+                      </td>
+                      <td align="right" class="text-ink" style="vertical-align:middle; font-family:'Space Grotesk', 'Helvetica Neue', Arial, sans-serif; font-size:16px; font-weight:700; color:#14182B;">$96.45</td>
+                    </tr>
+                    <tr>
+                      <td></td>
+                      <td colspan="2" style="padding-top:8px;">
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+                          <td width="39%" style="background-color:#FF9F1C; height:6px; line-height:6px; font-size:6px; border-radius:999px 0 0 999px;">&nbsp;</td>
+                          <td class="track" width="61%" style="background-color:#EFEAE0; height:6px; line-height:6px; font-size:6px; border-radius:0 999px 999px 0;">&nbsp;</td>
+                        </tr></table>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+
+            <!-- Two personalised tips: gold left rule = "a thought from Monivo" -->
+            <h2 class="text-ink" style="margin:32px 0 12px 0; font-size:18px; line-height:24px; font-weight:700; color:#14182B;">Two ideas for this week</h2>
+
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="bg-raised" style="background-color:#F3EFE6; border-radius:16px;">
+              <tr>
+                <td width="4" style="background-color:#F5B83D; border-radius:16px 0 0 16px; font-size:0; line-height:0;">&nbsp;</td>
+                <td style="padding:16px 20px;">
+                  <p class="text-ink" style="margin:0 0 4px 0; font-size:15px; line-height:22px; font-weight:700; color:#14182B;">Your coffee habit: $34 this week</p>
+                  <p class="text-muted" style="margin:0; font-size:14px; line-height:21px; color:#6B7390;">
+                    You stopped at Starbucks 6 times. Making coffee at home on two of those days would keep about $50 a month in your pocket.
+                  </p>
+                </td>
+              </tr>
+            </table>
+
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="bg-raised" style="background-color:#F3EFE6; border-radius:16px; margin-top:12px;">
+              <tr>
+                <td width="4" style="background-color:#F5B83D; border-radius:16px 0 0 16px; font-size:0; line-height:0;">&nbsp;</td>
+                <td style="padding:16px 20px;">
+                  <p class="text-ink" style="margin:0 0 4px 0; font-size:15px; line-height:22px; font-weight:700; color:#14182B;">Netflix and Spotify renew soon</p>
+                  <p class="text-muted" style="margin:0; font-size:14px; line-height:21px; color:#6B7390;">
+                    Together they're $27.48 a month. If you've stopped using one, cancelling it before the 7th saves up to $185 over a year.
+                  </p>
+                </td>
+              </tr>
+            </table>
+
+            <!-- CTA -->
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:32px 0 40px 0;">
+              <tr>
+                <td align="center" style="border-radius:999px; background-color:#F5B83D;">
+                  <!--[if mso]>
+                  <v:roundrect href="https://monivo.app/open" style="height:52px; v-text-anchor:middle; width:220px;" arcsize="50%" stroke="f" fillcolor="#F5B83D">
+                    <w:anchorlock/>
+                    <center style="color:#0B1020; font-family:Arial, sans-serif; font-size:16px; font-weight:bold;">Open Monivo</center>
+                  </v:roundrect>
+                  <![endif]-->
+                  <!--[if !mso]><!-->
+                  <a href="https://monivo.app/open" style="display:inline-block; padding:16px 36px; border-radius:999px; background-color:#F5B83D; font-family:'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size:16px; line-height:20px; font-weight:700; color:#0B1020;">
+                    Open Monivo
+                  </a>
+                  <!--<![endif]-->
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+          <td class="bg-card divider px" style="background-color:#FFFFFF; border-top:1px solid rgba(20,24,43,0.08); border-radius:0 0 24px 24px; padding:24px 40px 32px 40px; font-family:'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+            <p class="text-muted" style="margin:0 0 8px 0; font-size:13px; line-height:20px; color:#6B7390;">
+              You get this recap every Monday.
+              <a href="https://monivo.app/open/settings/notifications" style="color:#2F6BFF; font-weight:600;">Notification settings</a>
+              &nbsp;·&nbsp;
+              <a href="https://monivo.app/unsubscribe?type=weekly-recap" style="color:#2F6BFF; font-weight:600;">Unsubscribe</a>
+            </p>
+            <p class="text-muted" style="margin:0; font-size:12px; line-height:18px; color:#6B7390;">
+              Monivo · Sent to alex.morgan@example.com
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>
