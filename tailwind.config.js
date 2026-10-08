@@ -9,6 +9,11 @@ module.exports = {
   // NativeWind's web runtime calls colorScheme.set() on load, which throws under
   // the default 'media' mode. Theming is driven by <ThemeScope> vars, not `dark:`.
   darkMode: 'class',
+  // Our font-* classes pick a font *file* (e.g. font-bold → PlusJakartaSans_700Bold).
+  // Tailwind's built-in fontWeight utilities share those names and would also add
+  // `font-weight: 700`; on Android a custom font + fontWeight falls back to the
+  // system font. Turning the weight utilities off keeps each class to one job.
+  corePlugins: { fontWeight: false },
   theme: {
     // Replacing (not extending) the palette means off-brand colours such as
     // purple-500 or slate-400 simply don't exist as classes.

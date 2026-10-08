@@ -15,6 +15,7 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
+import { LogBox } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -22,6 +23,11 @@ import { ToastProvider } from '@/components/ui';
 import { queryClient } from '@/hooks/queryClient';
 import { SessionProvider, useSession } from '@/hooks/useSession';
 import { ThemeProvider, useTheme } from '@/theme';
+
+// Dev-only React Native warning on Android: a touch that *started* outside the
+// JS responder system (e.g. Expo Go's floating Tools button or a native gesture)
+// and *ended* on the app. Harmless, and LogBox doesn't exist in release builds.
+LogBox.ignoreLogs(['Cannot record touch end without a touch start']);
 
 // Keep the native splash up until fonts are ready — avoids a flash of system font.
 SplashScreen.preventAutoHideAsync().catch(() => {});
