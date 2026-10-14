@@ -40,6 +40,8 @@ export default function ScanReviewScreen() {
   });
 
   const done = extract.isSuccess;
+  // What to show on screen: the photo itself, or the drawn sample receipt.
+  const photoUri = !receiptPhoto || receiptPhoto === 'sample' ? 'sample' : receiptPhoto.uri;
 
   return (
     <Screen
@@ -56,12 +58,15 @@ export default function ScanReviewScreen() {
       contentClassName="pt-4"
     >
       {extract.isError ? (
-        <ErrorState error={extract.error} onRetry={run} />
+        <View className="gap-4">
+          <ErrorState error={extract.error} onRetry={run} />
+          <Button title="Add it manually instead" variant="secondary" onPress={() => router.replace('/add-manual')} fullWidth />
+        </View>
       ) : !done ? (
-        <ScanningView photo={receiptPhoto} />
+        <ScanningView photo={photoUri} />
       ) : (
         <AnimatedView entering={FadeIn.duration(300)}>
-          <ReceiptReviewFields form={form} photo={receiptPhoto} confidence={extract.data.confidence} currency={currency} />
+          <ReceiptReviewFields form={form} photo={photoUri} confidence={extract.data.confidence} currency={currency} />
         </AnimatedView>
       )}
     </Screen>

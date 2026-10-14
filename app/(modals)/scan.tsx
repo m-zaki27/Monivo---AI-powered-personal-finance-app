@@ -9,6 +9,7 @@ import { useDrafts } from '@/components/add';
 import { CameraGate, ScanFrame } from '@/components/scan';
 import { Header, IconButton, Screen, Text, TextLink, useToast } from '@/components/ui';
 import { haptics } from '@/lib/haptics';
+import type { ReceiptPhoto } from '@/services';
 import { palette } from '@/theme';
 
 export default function ScanScreen() {
@@ -20,8 +21,8 @@ export default function ScanScreen() {
   const [busy, setBusy] = useState(false);
   const { setReceiptPhoto } = useDrafts();
 
-  const review = (uri: string) => {
-    setReceiptPhoto(uri);
+  const review = (photo: ReceiptPhoto) => {
+    setReceiptPhoto(photo);
     router.push('/scan-review');
   };
 
@@ -30,9 +31,12 @@ export default function ScanScreen() {
     setBusy(true);
     haptics.press();
     try {
-      // 0.6 quality: plenty for reading text, and a much smaller upload later.
-      const photo = await camera.current.takePictureAsync({ quality: 0.6 });
-      review(photo.uri);
+      // 0.5 quality is plenty for reading text and keeps the upload to the AI small.
+      const photo = await camera.current.takePictureAsync({ quality: 0.5, base64: true });
+      if (!photo.base64) throw new Error('No image data');
+      // On web the base64 arrives as a full data URL; the AI wants just the data.
+      const base64 = photo.base64.replace(/^data:[^,]+,/, '');
+      review({ uri: photo.uri, base64, mimeType: photo.format === 'png' ? 'image/png' : 'image/jpeg' });
     } catch {
       toast.show({ message: "Couldn't take the photo. Try again.", tone: 'error' });
     } finally {

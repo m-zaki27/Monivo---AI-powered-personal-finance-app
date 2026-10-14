@@ -1,14 +1,16 @@
 import { router } from 'expo-router';
 import { MicOff } from 'lucide-react-native';
+import { useRef } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { FadeIn } from 'react-native-reanimated';
 
 import { useDrafts } from '@/components/add';
 import { Button, ErrorState, Header, Screen, Text } from '@/components/ui';
 import { MicButton, useVoiceCapture, VoiceResults, Waveform } from '@/components/voice';
-import { useCurrency, useDefaultAccount, useParseTranscript } from '@/hooks';
+import { formatCountdown, useCurrency, useDefaultAccount, useProcessVoice } from '@/hooks';
 import { AnimatedView } from '@/lib/animated';
 import { newDraftKey } from '@/schemas/transactionForm';
+import type { VoiceInput } from '@/services';
 import { useTheme } from '@/theme';
 
 type VoiceView = 'idle' | 'listening' | 'processing' | 'results' | 'empty' | 'error';
@@ -25,16 +27,25 @@ export default function VoiceScreen() {
   const { colors } = useTheme();
   const currency = useCurrency();
   const account = useDefaultAccount();
-  const parse = useParseTranscript();
+  const parse = useProcessVoice();
   const { drafts, setDrafts } = useDrafts();
+  // Kept so "Try again" after an error re-sends the same recording.
+  const lastInput = useRef<VoiceInput | null>(null);
 
-  const capture = useVoiceCapture((text) => {
-    if (!text.trim()) return;
-    parse.mutate(text, {
-      onSuccess: (items) =>
+  const process = (input: VoiceInput) => {
+    lastInput.current = input;
+    parse.mutate(input, {
+      onSuccess: ({ items }) =>
         setDrafts(items.map((it) => ({ ...it, key: newDraftKey(), accountId: account.data?.id ?? '', source: 'voice' }))),
     });
+  };
+
+  const capture = useVoiceCapture((input) => {
+    if (input.kind === 'demo' && !input.transcript.trim()) return;
+    process(input);
   });
+  // The AI's transcript once it's back; while the demo plays, its words.
+  const transcript = parse.data?.transcript ?? capture.transcript;
 
   // One value describes the whole screen, so each state renders exactly one way.
   const view: VoiceView = parse.isPending
@@ -68,7 +79,7 @@ export default function VoiceScreen() {
         }
         contentClassName="pt-4"
       >
-        <VoiceResults transcript={capture.transcript} currency={currency} />
+        <VoiceResults transcript={transcript} currency={currency} />
       </Screen>
     );
   }
@@ -86,10 +97,20 @@ export default function VoiceScreen() {
                 Say it naturally, like “Twelve fifty for lunch at Chipotle”. You can mention a few at once.
               </Text>
             )}
-            {(view === 'listening' || view === 'processing') && (
+            {view === 'listening' && capture.mode === 'real' && (
+              <AnimatedView entering={FadeIn} className="items-center gap-2">
+                <Text variant="moneyLg" style={{ fontVariant: ['tabular-nums'] }}>
+                  {formatCountdown(capture.seconds)}
+                </Text>
+                <Text tone="muted" center>
+                  Speak naturally. Tap stop when you're done.
+                </Text>
+              </AnimatedView>
+            )}
+            {((view === 'listening' && capture.mode === 'demo') || view === 'processing') && (
               <AnimatedView entering={FadeIn}>
                 <Text variant="title" center className="leading-8">
-                  {capture.transcript || '…'}
+                  {capture.mode === 'demo' ? capture.transcript || '…' : 'Reading your voice note…'}
                 </Text>
               </AnimatedView>
             )}
@@ -98,7 +119,9 @@ export default function VoiceScreen() {
                 Try again with an amount and where, like “Coffee for five dollars”.
               </Text>
             )}
-            {view === 'error' && <ErrorState compact error={parse.error} onRetry={() => parse.mutate(capture.transcript)} />}
+            {view === 'error' && (
+              <ErrorState compact error={parse.error} onRetry={lastInput.current ? () => process(lastInput.current!) : undefined} />
+            )}
           </View>
         </View>
 
@@ -126,7 +149,7 @@ export default function VoiceScreen() {
             <View className="mt-2 flex-row items-center gap-2 px-6">
               <MicOff size={16} color={colors.warning} />
               <Text variant="caption" tone="warning" className="flex-1">
-                Microphone access is off, so this is a demo. Turn it on in Settings to use your voice.
+                Microphone access is off, so this was a demo with a sample sentence. Turn it on in Settings to use your voice.
               </Text>
             </View>
           )}

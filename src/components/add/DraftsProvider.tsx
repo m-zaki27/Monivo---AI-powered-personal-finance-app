@@ -1,15 +1,16 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 
 import type { Draft } from '@/schemas/transactionForm';
+import type { ReceiptPhoto } from '@/services';
 
 interface DraftsContextValue {
   drafts: Draft[];
   setDrafts: (drafts: Draft[]) => void;
   updateDraft: (draft: Draft) => void;
   removeDraft: (key: string) => void;
-  /** Captured receipt photo URI, or 'sample' for the demo receipt (web / simulator) */
-  receiptPhoto: string | null;
-  setReceiptPhoto: (uri: string | null) => void;
+  /** Captured receipt photo (uri + base64 for the AI), or 'sample' for the demo receipt */
+  receiptPhoto: ReceiptPhoto | null;
+  setReceiptPhoto: (photo: ReceiptPhoto | null) => void;
 }
 
 const DraftsContext = createContext<DraftsContextValue | null>(null);
@@ -23,7 +24,7 @@ const DraftsContext = createContext<DraftsContextValue | null>(null);
  */
 export function DraftsProvider({ children }: { children: ReactNode }) {
   const [drafts, setDrafts] = useState<Draft[]>([]);
-  const [receiptPhoto, setReceiptPhoto] = useState<string | null>(null);
+  const [receiptPhoto, setReceiptPhoto] = useState<ReceiptPhoto | null>(null);
   const updateDraft = useCallback((d: Draft) => setDrafts((all) => all.map((x) => (x.key === d.key ? d : x))), []);
   const removeDraft = useCallback((key: string) => setDrafts((all) => all.filter((x) => x.key !== key)), []);
   const value = useMemo(

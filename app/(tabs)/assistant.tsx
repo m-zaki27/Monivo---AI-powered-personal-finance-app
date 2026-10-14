@@ -28,14 +28,16 @@ export default function AssistantScreen() {
 
   const send = (text: string) => {
     if (ask.isPending) return;
+    // Recent turns travel with the question, so follow-ups ("and last month?") make sense.
+    const history = messages.filter((m) => !m.error).map((m) => ({ role: m.role, text: m.text }));
     setMessages((m) => [...m, { id: nextId(), role: 'user', text }]);
-    ask.mutate(text, {
+    ask.mutate({ question: text, history }, {
       onSuccess: (reply) => {
         setMessages((m) => [...m, { id: nextId(), role: 'assistant', text: reply.text, card: reply.card }]);
-        setFollowUps(reply.followUps ?? starterPrompts);
+        setFollowUps(reply.followUps?.length ? reply.followUps : starterPrompts);
       },
-      onError: () =>
-        setMessages((m) => [...m, { id: nextId(), role: 'assistant', text: "Sorry, I couldn't answer that just now. Try again in a moment.", error: true }]),
+      // Show the real reason (e.g. the daily limit) rather than a generic apology.
+      onError: (e) => setMessages((m) => [...m, { id: nextId(), role: 'assistant', text: e.message, error: true }]),
     });
   };
 

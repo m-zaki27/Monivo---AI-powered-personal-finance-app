@@ -433,3 +433,6 @@ enabled = true
 # works with Supabase's newer asymmetric signing keys.
 [functions.delete-account]
 verify_jwt = false
+
+[functions.ai]
+verify_jwt = false
