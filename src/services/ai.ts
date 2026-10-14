@@ -1,7 +1,8 @@
 import { addDays, startOfDay } from '@/lib/dates';
 import type { TransactionType } from '@/schemas/models';
 
-import { respond } from './mockServer';
+/** Simulated processing time until F4 calls Gemini. */
+const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /**
  * Mock "AI" endpoints. The real versions will send the photo / transcript to
@@ -27,13 +28,11 @@ const sampleReceipts: Omit<ReceiptExtraction, 'date'>[] = [
 
 /** Pretends to read a receipt photo. Slower than other calls on purpose: real OCR + LLM takes a moment. */
 export async function extractReceipt(_photoUri: string): Promise<ReceiptExtraction> {
-  await new Promise((r) => setTimeout(r, 1800));
-  return respond(() => {
-    const pick = sampleReceipts[Math.floor(Math.random() * sampleReceipts.length)]!;
-    const date = new Date();
-    date.setMinutes(date.getMinutes() - 20);
-    return { ...pick, date: date.toISOString() };
-  });
+  await wait(2200);
+  const pick = sampleReceipts[Math.floor(Math.random() * sampleReceipts.length)]!;
+  const date = new Date();
+  date.setMinutes(date.getMinutes() - 20);
+  return { ...pick, date: date.toISOString() };
 }
 
 /** Scripts the mock "speech recognizer" plays back word by word. */
@@ -56,8 +55,9 @@ export interface ParsedItem {
  * Pretends to turn speech into transactions. One sentence can hold several
  * ("lunch … and gas …"), so it returns a list.
  */
-export function parseTranscript(text: string) {
-  return respond<ParsedItem[]>(() => {
+export async function parseTranscript(text: string): Promise<ParsedItem[]> {
+  await wait(450);
+  {
     const t = text.toLowerCase();
     const today = new Date();
     const at = (d: Date, h: number) => new Date(startOfDay(d).getTime() + h * 3_600_000).toISOString();
@@ -68,5 +68,5 @@ export function parseTranscript(text: string) {
     if (t.includes('northwind')) items.push({ type: 'income', amount: 2_850_00, merchant: 'Northwind Labs', categoryId: 'cat_salary', date: today.toISOString() });
     if (t.includes('starbucks')) items.push({ type: 'expense', amount: 5_45, merchant: 'Starbucks', categoryId: 'cat_food', date: today.toISOString() });
     return items;
-  });
+  }
 }

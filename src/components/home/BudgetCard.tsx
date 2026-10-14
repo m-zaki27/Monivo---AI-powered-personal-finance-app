@@ -31,6 +31,7 @@ export function BudgetCard({ summary, error, onRetry, currency, hidden }: Budget
   if (!summary) return <BudgetCardSkeleton />;
 
   const { expense, budget, usedRatio } = summary;
+  if (!budget || usedRatio == null) return <NoBudgetCard spent={expense} currency={currency} hidden={hidden} />;
   const tone = progressTone(usedRatio, budget.alertThreshold);
   const pct = Math.round(usedRatio * 100);
   const left = budget.monthlyLimit - expense;
@@ -83,6 +84,27 @@ function BudgetCardSkeleton() {
       <Skeleton height={28} width="55%" />
       <Skeleton height={10} rounded="rounded-full" />
       <Skeleton height={12} width="65%" />
+    </Card>
+  );
+}
+
+/** New users have no budget yet: invite them to set one instead of showing an empty bar. */
+function NoBudgetCard({ spent, currency, hidden }: { spent: number; currency: string; hidden: boolean }) {
+  const { colors } = useTheme();
+  return (
+    <Card className="flex-row items-center gap-4" onPress={() => router.push('/budget')} accessibilityLabel="Set a monthly budget">
+      <View className="h-12 w-12 items-center justify-center rounded-full" style={{ backgroundColor: withAlpha(colors.secondary, 0.14) }}>
+        <Target size={22} color={colors.secondary} strokeWidth={2} />
+      </View>
+      <View className="flex-1 gap-0.5">
+        <Text weight="bold">Set a monthly budget</Text>
+        <Text variant="bodySm" tone="muted">
+          {hidden ? 'Get a heads-up before you overspend.' : `${formatMoney(spent, { currency, hideZeroCents: true })} spent so far this month.`}
+        </Text>
+      </View>
+      <Text variant="bodySm" weight="bold" tone="cobalt">
+        Set
+      </Text>
     </Card>
   );
 }

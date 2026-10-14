@@ -5,7 +5,7 @@ export * as authApi from './auth';
 export * as budgetApi from './budget';
 export * as transactionsApi from './transactions';
 export * as userApi from './user';
-export { ApiError, mockConfig } from './mockServer';
+export { ApiError } from './errors';
 export type { TransactionFilters, NewTransaction } from './transactions';
 export type { MonthSummary, CategorySpend } from './budget';
 export type { NewAccount } from './accounts';

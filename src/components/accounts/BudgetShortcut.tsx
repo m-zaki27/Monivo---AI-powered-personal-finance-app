@@ -22,7 +22,11 @@ export function BudgetShortcut({ currency }: { currency: string }) {
         </View>
         <View className="flex-1">
           <Text weight="bold">Monthly budget</Text>
-          {s ? (
+          {s && !s.budget ? (
+            <Text variant="caption" tone="muted">
+              Not set yet. Tap to set one.
+            </Text>
+          ) : s?.budget ? (
             <Text variant="caption" tone="muted">
               {formatMoney(s.expense, { currency, hideZeroCents: true })} of {formatMoney(s.budget.monthlyLimit, { currency, hideZeroCents: true })} · alerts at{' '}
               {Math.round(s.budget.alertThreshold * 100)}%
@@ -33,7 +37,7 @@ export function BudgetShortcut({ currency }: { currency: string }) {
         </View>
         <ChevronRight size={20} color={colors.muted} />
       </View>
-      {s && <ProgressBar value={s.usedRatio} warnAt={s.budget.alertThreshold} />}
+      {s?.budget && s.usedRatio != null && <ProgressBar value={s.usedRatio} warnAt={s.budget.alertThreshold} />}
     </Card>
   );
 }

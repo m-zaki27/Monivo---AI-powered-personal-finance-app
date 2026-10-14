@@ -1,28 +1,55 @@
-import type { Account, AccountWithBalance } from '@/schemas/models';
+import type { TablesUpdate } from '@/lib/database.types';
+import { supabase } from '@/lib/supabase';
+import type { Account, AccountType, AccountWithBalance } from '@/schemas/models';
+import type { CategoryColor } from '@/theme/tokens';
 
-import { ApiError, db, newId, respond } from './mockServer';
+import { ApiError, unwrap } from './errors';
 
-function withBalance(a: Account): AccountWithBalance {
-  let balance = a.openingBalance;
-  let transactionCount = 0;
-  for (const t of db.transactions) {
-    if (t.accountId !== a.id) continue;
-    balance += t.type === 'income' ? t.amount : -t.amount;
-    transactionCount++;
-  }
-  return { ...a, balance, transactionCount };
+/**
+ * Accounts read from the `account_balances` view, which adds each account's
+ * live balance and transaction count, worked out by the database.
+ */
+
+type BalanceRow = {
+  id: string | null;
+  name: string | null;
+  type: string | null;
+  institution: string | null;
+  last4: string | null;
+  color: string | null;
+  opening_balance: number | null;
+  is_default: boolean | null;
+  created_at: string | null;
+  balance: number | null;
+  transaction_count: number | null;
+};
+
+// View columns are typed as nullable by the generator, but these never are.
+function toAccount(r: BalanceRow): AccountWithBalance {
+  return {
+    id: r.id!,
+    name: r.name!,
+    type: r.type as AccountType,
+    institution: r.institution ?? undefined,
+    last4: r.last4 ?? undefined,
+    color: (r.color ?? 'cobalt') as CategoryColor,
+    openingBalance: Number(r.opening_balance ?? 0),
+    isDefault: !!r.is_default,
+    createdAt: r.created_at!,
+    balance: Number(r.balance ?? 0),
+    transactionCount: r.transaction_count ?? 0,
+  };
 }
 
-export function listAccounts() {
-  return respond(() => db.accounts.map(withBalance));
+export async function listAccounts(): Promise<AccountWithBalance[]> {
+  const rows = unwrap(await supabase.from('account_balances').select('*').order('created_at'));
+  return rows.map(toAccount);
 }
 
-export function getAccount(id: string) {
-  return respond(() => {
-    const a = db.accounts.find((x) => x.id === id);
-    if (!a) throw new ApiError('Account not found', 404);
-    return withBalance(a);
-  });
+export async function getAccount(id: string): Promise<AccountWithBalance> {
+  const row = unwrap(await supabase.from('account_balances').select('*').eq('id', id).maybeSingle());
+  if (!row) throw new ApiError("We couldn't find that account. It may have been deleted.", 404);
+  return toAccount(row);
 }
 
 export type NewAccount = Pick<Account, 'name' | 'type' | 'institution' | 'last4' | 'color'> & {
@@ -30,49 +57,53 @@ export type NewAccount = Pick<Account, 'name' | 'type' | 'institution' | 'last4'
   isDefault?: boolean;
 };
 
-export function createAccount(input: NewAccount) {
-  return respond(() => {
-    const { startingBalance, isDefault = false, ...rest } = input;
-    if (isDefault) db.accounts.forEach((a) => (a.isDefault = false));
-    const account: Account = {
-      ...rest,
-      id: newId('acc'),
-      openingBalance: startingBalance,
-      isDefault: isDefault || db.accounts.length === 0,
-      createdAt: new Date().toISOString(),
-    };
-    db.accounts.push(account);
-    return withBalance(account);
-  });
+export async function createAccount(input: NewAccount): Promise<AccountWithBalance> {
+  const row = unwrap(
+    await supabase
+      .from('accounts')
+      .insert({
+        name: input.name,
+        type: input.type,
+        institution: input.institution ?? null,
+        last4: input.last4 ?? null,
+        color: input.color,
+        opening_balance: input.startingBalance,
+      })
+      .select('id')
+      .single(),
+  );
+  // A user's first account becomes default automatically (database trigger).
+  if (input.isDefault) await setDefaultAccount(row.id);
+  return getAccount(row.id);
 }
 
-export function updateAccount(id: string, patch: Partial<Pick<Account, 'name' | 'type' | 'institution' | 'last4' | 'color'>>) {
-  return respond(() => {
-    const a = db.accounts.find((x) => x.id === id);
-    if (!a) throw new ApiError('Account not found', 404);
-    Object.assign(a, patch);
-    return withBalance(a);
-  });
+type AccountPatch = Partial<Pick<Account, 'name' | 'type' | 'institution' | 'last4' | 'color'>>;
+
+export async function updateAccount(id: string, patch: AccountPatch): Promise<AccountWithBalance> {
+  const update: TablesUpdate<'accounts'> = {};
+  if (patch.name !== undefined) update.name = patch.name;
+  if (patch.type !== undefined) update.type = patch.type;
+  if ('institution' in patch) update.institution = patch.institution ?? null;
+  if ('last4' in patch) update.last4 = patch.last4 ?? null;
+  if (patch.color !== undefined) update.color = patch.color;
+  unwrap(await supabase.from('accounts').update(update).eq('id', id).select('id').single());
+  return getAccount(id);
 }
 
-export function setDefaultAccount(id: string) {
-  return respond(() => {
-    if (!db.accounts.some((a) => a.id === id)) throw new ApiError('Account not found', 404);
-    db.accounts.forEach((a) => (a.isDefault = a.id === id));
-    return db.accounts.map(withBalance);
-  });
+/** Moves the "Default" badge in one database call, so two accounts never both have it. */
+export async function setDefaultAccount(id: string): Promise<AccountWithBalance[]> {
+  unwrap(await supabase.rpc('set_default_account', { p_account_id: id }));
+  return listAccounts();
 }
 
-/** Deletes the account and its transactions (the UI warns first). */
-export function deleteAccount(id: string) {
-  return respond(() => {
-    const target = db.accounts.find((a) => a.id === id);
-    if (!target) throw new ApiError('Account not found', 404);
-    // Every transaction needs an account, so the last one can't go.
-    if (db.accounts.length === 1) throw new ApiError('You need at least one account. Add another before deleting this one.', 409);
-    db.accounts = db.accounts.filter((a) => a.id !== id);
-    db.transactions = db.transactions.filter((t) => t.accountId !== id);
-    if (target.isDefault && db.accounts[0]) db.accounts[0].isDefault = true;
-    return { id };
-  });
+/** Deletes the account and (by cascade) its transactions. The last account can't go. */
+export async function deleteAccount(id: string) {
+  const { count } = await supabase.from('accounts').select('id', { count: 'exact', head: true });
+  if ((count ?? 0) <= 1) {
+    throw new ApiError('You need at least one account. Add another before deleting this one.', 409);
+  }
+  const rows = unwrap(await supabase.from('accounts').delete().eq('id', id).select('id'));
+  // RLS turns a forbidden delete into "0 rows" rather than an error.
+  if (rows.length === 0) throw new ApiError("We couldn't delete that account. Please try again.", 403);
+  return { id };
 }

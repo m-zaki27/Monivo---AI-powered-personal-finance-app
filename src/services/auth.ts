@@ -2,7 +2,7 @@ import { isAuthApiError, isAuthError, type AuthError } from '@supabase/supabase-
 
 import { supabase } from '@/lib/supabase';
 
-import { ApiError } from './mockServer';
+import { ApiError } from './errors';
 
 /**
  * Real authentication on Supabase Auth. Function names and return shapes match

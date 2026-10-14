@@ -4,6 +4,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
 import { AppState, Platform } from 'react-native';
 
+import type { Database } from './database.types';
+
 /**
  * The one Supabase client. Keys come from `.env.local` (EXPO_PUBLIC_ vars are
  * inlined into the app at build time). The anon key is *meant* to be public:
@@ -14,7 +16,9 @@ const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
 export const isSupabaseConfigured = Boolean(url && anonKey);
 
-export const supabase = createClient(url || 'http://localhost:54321', anonKey || 'missing-anon-key', {
+// <Database> types every table, view and function from the generated schema
+// (`npx supabase gen types typescript`), so queries are checked at compile time.
+export const supabase = createClient<Database>(url || 'http://localhost:54321', anonKey || 'missing-anon-key', {
   auth: {
     // Supabase's recommended storage for React Native. Survives app restarts.
     storage: AsyncStorage,

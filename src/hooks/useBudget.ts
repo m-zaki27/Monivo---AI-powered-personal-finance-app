@@ -22,7 +22,7 @@ export function useMonthSummary(month: Date = new Date()) {
 export function useUpdateBudget() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (patch: Partial<Budget>) => budgetApi.updateBudget(patch),
+    mutationFn: (budget: Budget) => budgetApi.updateBudget(budget),
     onSuccess: (budget) => {
       qc.setQueryData(queryKeys.budget, budget);
       return qc.invalidateQueries({ queryKey: queryKeys.summaryAll });

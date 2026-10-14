@@ -1,14 +1,16 @@
 import { addDays, daysInMonth, endOfMonth, startOfMonth } from '@/lib/dates';
 import { formatMoney } from '@/lib/money';
-import type { Transaction } from '@/schemas/models';
+import type { Budget, Category, Transaction } from '@/schemas/models';
 import type { CategoryColor } from '@/theme/tokens';
 
-import { db, respond } from './mockServer';
+import { getBudget } from './budget';
+import { listTransactions } from './transactions';
+import { getMe, listCategories } from './user';
 
 /**
- * Mock assistant. It matches a few intents by keyword, but answers from the
- * real (mock) data, so numbers agree with Home. The real version will call an
- * LLM with tool access to the same data; screens only see `AssistantReply`.
+ * Keyword-matching assistant that answers from the user's real data, so its
+ * numbers agree with Home. F4 swaps the keyword matching for Gemini; screens
+ * only ever see `AssistantReply`.
  */
 
 export type AnswerCard =
@@ -27,18 +29,40 @@ export const starterPrompts = ['How much did I spend on food?', 'Am I on budget?
 
 const THINK_MS = 900;
 
+/** Everything one answer needs, loaded once per question. */
+interface Ctx {
+  transactions: Transaction[];
+  categories: Category[];
+  budget: Budget | null;
+  currency: string;
+}
+
+let ctx: Ctx;
+
+async function loadContext(): Promise<Ctx> {
+  const prev = new Date();
+  prev.setMonth(prev.getMonth() - 1, 1);
+  const [transactions, categories, budget, me] = await Promise.all([
+    listTransactions({ from: startOfMonth(prev).toISOString() }),
+    listCategories(),
+    getBudget(),
+    getMe(),
+  ]);
+  return { transactions, categories, budget, currency: me.currency };
+}
+
 function inMonth(offset = 0) {
   const ref = new Date();
   ref.setMonth(ref.getMonth() + offset, 1);
   const from = startOfMonth(ref).toISOString();
   const to = endOfMonth(ref).toISOString();
-  return db.transactions.filter((t) => t.date >= from && t.date <= to);
+  return ctx.transactions.filter((t) => t.date >= from && t.date <= to);
 }
 
 const expenses = (ts: Transaction[]) => ts.filter((t) => t.type === 'expense');
 const total = (ts: Transaction[]) => ts.reduce((s, t) => s + t.amount, 0);
-const cat = (id: string) => db.categories.find((c) => c.id === id);
-const money = (c: number) => formatMoney(c, { currency: db.user.currency, hideZeroCents: true });
+const cat = (id: string) => ctx.categories.find((c) => c.id === id);
+const money = (c: number) => formatMoney(c, { currency: ctx.currency, hideZeroCents: true });
 
 /** Group by a key, sum amounts, biggest first. */
 function topBy(ts: Transaction[], key: (t: Transaction) => string, n: number) {
@@ -72,7 +96,13 @@ const FIXED_CATEGORIES = new Set(['cat_rent', 'cat_bills', 'cat_subscriptions'])
 function budget(): AssistantReply {
   const ex = expenses(inMonth());
   const spent = total(ex);
-  const { monthlyLimit: limit, alertThreshold: threshold } = db.budget;
+  if (!ctx.budget) {
+    return {
+      text: `You've spent ${money(spent)} this month, but you haven't set a budget yet. Set one in Accounts → Budget and I can tell you how you're tracking.`,
+      followUps: ['Where does my money go?'],
+    };
+  }
+  const { monthlyLimit: limit, alertThreshold: threshold } = ctx.budget;
   const today = new Date();
   const dim = daysInMonth(today);
   // Projection = what's spent + everyday spending's daily average for the days left.
@@ -143,16 +173,18 @@ const intents: [RegExp, () => AssistantReply][] = [
   [/where|categor|break ?down|spend|spent|money go/, breakdown],
 ];
 
-export function ask(question: string) {
-  return respond<AssistantReply>(() => {
-    const q = question.toLowerCase();
-    const match = intents.find(([re]) => re.test(q));
-    if (match) return match[1]();
-    return {
-      text: "I'm still learning. Right now I can help with spending, your budget, categories and subscriptions.",
-      followUps: starterPrompts.slice(0, 3),
-    };
-  });
+export async function ask(question: string): Promise<AssistantReply> {
+  ctx = await loadContext();
+  if (ctx.transactions.length === 0) {
+    return { text: "You haven't added any transactions yet. Add a few with the + button and ask me again." };
+  }
+  const q = question.toLowerCase();
+  const match = intents.find(([re]) => re.test(q));
+  if (match) return match[1]();
+  return {
+    text: "I'm still learning. Right now I can help with spending, your budget, categories and subscriptions.",
+    followUps: starterPrompts.slice(0, 3),
+  };
 }
 
 /** Lets the typing indicator show for a believable moment. */

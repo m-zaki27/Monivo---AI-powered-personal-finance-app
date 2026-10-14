@@ -15,7 +15,7 @@ export default function BudgetScreen() {
   const budget = useBudget();
   return (
     <Screen
-      scroll={!!budget.data}
+      scroll={!budget.isPending}
       header={<Header title="Monthly budget" leading="close" />}
       contentClassName="pt-4"
     >
@@ -34,8 +34,11 @@ export default function BudgetScreen() {
   );
 }
 
-/** Split out so useForm starts with the loaded values (defaultValues are only read once). */
-function BudgetForm({ budget }: { budget: Budget }) {
+/**
+ * Split out so useForm starts with the loaded values (defaultValues are only
+ * read once). `budget` is null for someone who hasn't set one yet.
+ */
+function BudgetForm({ budget }: { budget: Budget | null }) {
   const currency = useCurrency();
   const summary = useMonthSummary();
   const update = useUpdateBudget();
@@ -43,9 +46,9 @@ function BudgetForm({ budget }: { budget: Budget }) {
   const form = useForm<BudgetFormValues>({
     resolver: zodResolver(budgetFormSchema),
     defaultValues: {
-      monthlyLimit: centsToInput(budget.monthlyLimit).replace(/\.00$/, ''),
-      alertThreshold: budget.alertThreshold,
-      emailAlerts: budget.emailAlerts,
+      monthlyLimit: budget ? centsToInput(budget.monthlyLimit).replace(/\.00$/, '') : '',
+      alertThreshold: budget?.alertThreshold ?? 0.8,
+      emailAlerts: budget?.emailAlerts ?? true,
     },
     mode: 'onTouched',
   });
@@ -55,7 +58,7 @@ function BudgetForm({ budget }: { budget: Budget }) {
       { monthlyLimit: parseToCents(v.monthlyLimit) ?? 0, alertThreshold: v.alertThreshold, emailAlerts: v.emailAlerts },
       {
         onSuccess: () => {
-          toast.show({ message: 'Budget updated', tone: 'success' });
+          toast.show({ message: budget ? 'Budget updated' : 'Budget set', tone: 'success' });
           closeModal();
         },
       },
@@ -66,7 +69,7 @@ function BudgetForm({ budget }: { budget: Budget }) {
     <View className="gap-6 pb-4">
       <BudgetFormFields form={form} currency={currency} spent={summary.data?.expense} />
       <FormError message={update.error?.message} />
-      <Button title="Save budget" loading={update.isPending} onPress={submit} fullWidth />
+      <Button title={budget ? 'Save budget' : 'Set budget'} loading={update.isPending} onPress={submit} fullWidth />
     </View>
   );
 }
