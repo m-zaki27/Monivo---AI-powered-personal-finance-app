@@ -3,7 +3,7 @@ import { FileKey2, ShieldCheck, ShieldOff } from 'lucide-react-native';
 import { useState } from 'react';
 
 import { Dialog, useToast } from '@/components/ui';
-import { useDisableMfa } from '@/hooks';
+import { useBackupCodesStatus, useDisableMfa } from '@/hooks';
 import { useTheme } from '@/theme';
 
 import { SettingsRow, SettingsSection } from './SettingsRow';
@@ -18,6 +18,8 @@ export function SecuritySection({ enabled }: { enabled: boolean }) {
   const toast = useToast();
   const disable = useDisableMfa();
   const [confirmOff, setConfirmOff] = useState(false);
+  const backup = useBackupCodesStatus();
+  const backupValue = backup.data && !('missing' in backup.data) ? `${backup.data.remaining} left` : undefined;
 
   return (
     <>
@@ -29,7 +31,15 @@ export function SecuritySection({ enabled }: { enabled: boolean }) {
           description={enabled ? 'On. You enter a code when you log in' : 'Add a code from an authenticator app'}
           toggle={{ value: enabled, onChange: (on) => (on ? router.push('/mfa-setup') : setConfirmOff(true)) }}
         />
-        {enabled && <SettingsRow icon={FileKey2} label="Backup codes" description="For when your phone isn't handy" onPress={() => router.push('/backup-codes')} />}
+        {enabled && (
+          <SettingsRow
+            icon={FileKey2}
+            label="Backup codes"
+            description="For when your phone isn't handy"
+            value={backupValue}
+            onPress={() => router.push('/backup-codes')}
+          />
+        )}
       </SettingsSection>
 
       <Dialog

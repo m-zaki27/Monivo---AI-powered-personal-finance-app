@@ -1,182 +1,217 @@
-import type { Session } from '@/schemas/auth';
+import { isAuthApiError, isAuthError, type AuthError } from '@supabase/supabase-js';
 
-import { ApiError, db, newId, respond } from './mockServer';
+import { supabase } from '@/lib/supabase';
+
+import { ApiError } from './mockServer';
 
 /**
- * Mock auth API. Rules so every state can be tested by hand:
- * - Any 6-digit code works, except 000000 (always "wrong").
- * - Logging in with the password "wrongpass1" fails; any other password works.
- * - Signing up with taken@example.com fails ("already exists").
- * - Backup codes are real: each one works once.
+ * Real authentication on Supabase Auth. Function names and return shapes match
+ * the old mock, so hooks and screens barely changed. Supabase errors are
+ * translated into friendly ApiErrors; `field` puts a message under the input
+ * it belongs to (see applyApiError).
  */
 
-const WRONG_CODE = '000000';
-const WRONG_PASSWORD = 'wrongpass1';
-const TAKEN_EMAIL = 'taken@example.com';
+const messages: Record<string, { message: string; field?: string }> = {
+  invalid_credentials: { message: "That email and password don't match. Try again or reset your password." },
+  user_already_exists: { message: 'An account with this email already exists. Try logging in.', field: 'email' },
+  email_exists: { message: 'An account with this email already exists. Try logging in.', field: 'email' },
+  weak_password: { message: 'Pick a stronger password: at least 8 characters, with a letter and a number.', field: 'password' },
+  same_password: { message: 'Choose a password you haven’t used for this account before.', field: 'password' },
+  otp_expired: { message: 'That code is wrong or has expired. Check it, or ask for a new one.', field: 'code' },
+  mfa_verification_failed: { message: "That code isn't right. Check your authenticator app and try again.", field: 'code' },
+  mfa_recovery_codes_locked: { message: 'Too many wrong backup codes. Wait a few minutes, then try again.' },
+  over_email_send_rate_limit: { message: 'We just sent you an email. Wait a minute before asking for another.' },
+  over_request_rate_limit: { message: 'Too many attempts. Wait a minute, then try again.' },
+  email_address_not_authorized: {
+    message: "We can't send email to this address yet. The app's email sender isn't set up for public use.",
+    field: 'email',
+  },
+};
 
-const isValidCode = (code: string) => /^\d{6}$/.test(code) && code !== WRONG_CODE;
-const badCode = () => new ApiError("That code isn't right. Check it and try again.", 400, 'code');
-const newSession = (onboarded: boolean): Session => ({ token: newId('tok'), onboarded });
-
-// In-flight flows a real server would keep per request.
-let pendingSignUp: { name: string; email: string } | null = null;
-let pendingMfaSecret: string | null = null;
-const mfaChallenges = new Set<string>();
-const resetTokens = new Set<string>();
-
-export type LogInResult =
-  | { status: 'ok'; session: Session }
-  | { status: 'mfa_required'; challengeId: string };
-
-export function signUp(input: { name: string; email: string; password: string }) {
-  return respond(() => {
-    if (input.email.toLowerCase() === TAKEN_EMAIL) {
-      throw new ApiError('An account with this email already exists. Try logging in.', 409, 'email');
-    }
-    pendingSignUp = { name: input.name, email: input.email };
-    return { sentTo: input.email };
-  });
+function toApiError(error: AuthError): ApiError {
+  const known = error.code ? messages[error.code] : undefined;
+  if (known) return new ApiError(known.message, error.status ?? 400, known.field);
+  // Network failures come through as non-API auth errors.
+  if (isAuthError(error) && !isAuthApiError(error)) {
+    return new ApiError("We couldn't reach Monivo. Check your connection and try again.", 0);
+  }
+  return new ApiError(error.message || 'Something went wrong. Please try again.', error.status ?? 500);
 }
 
-export function resendCode(email: string) {
-  return respond(() => ({ sentTo: email }));
+/** Supabase calls return either `{ data, error: null }` or `{ data: null, error }`. */
+type Result = { data: unknown; error: AuthError | null };
+/** The data type of the success branch only. */
+type Ok<R extends Result> = Extract<R, { error: null }>['data'];
+
+/** Unwraps that into "return data or throw a friendly error". */
+function check<R extends Result>(result: R): Ok<R> {
+  if (result.error) throw toApiError(result.error);
+  return result.data as Ok<R>;
 }
 
-/** Confirms the sign-up email and starts a session (not onboarded yet). */
-export function verifyEmail(input: { email: string; code: string }) {
-  return respond(() => {
-    if (!isValidCode(input.code)) throw badCode();
-    if (pendingSignUp) {
-      const [firstName = '', ...rest] = pendingSignUp.name.split(' ');
-      db.user = { ...db.user, firstName, lastName: rest.join(' '), email: pendingSignUp.email, mfaEnabled: false };
-      db.auth = { mfaSecret: null, backupCodes: [] };
-      pendingSignUp = null;
-    }
-    return newSession(false);
-  });
+/** True when the user has two-step verification on but hasn't entered a code this session. */
+export async function needsMfa(): Promise<boolean> {
+  const aal = check(await supabase.auth.mfa.getAuthenticatorAssuranceLevel());
+  return aal.nextLevel === 'aal2' && aal.currentLevel !== 'aal2';
 }
 
-export function logIn(input: { email: string; password: string }) {
-  return respond<LogInResult>(() => {
-    if (input.password === WRONG_PASSWORD) {
-      throw new ApiError("That email and password don't match. Try again or reset your password.", 401);
-    }
-    if (db.user.mfaEnabled) {
-      const challengeId = newId('mfa');
-      mfaChallenges.add(challengeId);
-      return { status: 'mfa_required', challengeId };
-    }
-    return { status: 'ok', session: newSession(true) };
-  });
+// --- Sign up & email codes ---
+
+export async function signUp(input: { name: string; email: string; password: string }) {
+  const [firstName = '', ...rest] = input.name.trim().split(/\s+/);
+  const data = check(
+    await supabase.auth.signUp({
+      email: input.email,
+      password: input.password,
+      options: { data: { first_name: firstName, last_name: rest.join(' ') } },
+    }),
+  );
+  // With email confirmation on, signing up with an existing email "succeeds"
+  // but returns a user with no identities and sends nothing. We say so plainly;
+  // the trade-off is that this reveals whether an email has an account.
+  if (data.user && data.user.identities?.length === 0) {
+    throw new ApiError(messages.user_already_exists!.message, 409, 'email');
+  }
+  return { sentTo: input.email, needsVerification: !data.session };
 }
 
-/** Second login step: an authenticator code or a one-time backup code. */
-export function verifyMfa(input: { challengeId: string; code: string; method: 'totp' | 'backup' }) {
-  return respond(() => {
-    if (!mfaChallenges.has(input.challengeId)) {
-      throw new ApiError('This sign-in expired. Go back and log in again.', 410);
-    }
-    if (input.method === 'backup') {
-      const normalized = normalizeBackupCode(input.code);
-      const index = db.auth.backupCodes.indexOf(normalized);
-      if (index < 0) throw new ApiError("That backup code isn't valid or was already used.", 400, 'code');
-      db.auth.backupCodes.splice(index, 1);
-    } else if (!isValidCode(input.code)) {
-      throw badCode();
-    }
-    mfaChallenges.delete(input.challengeId);
-    return newSession(true);
-  });
+export type CodePurpose = 'signup' | 'reset';
+
+export async function resendCode(input: { email: string; purpose: CodePurpose }) {
+  if (input.purpose === 'reset') check(await supabase.auth.resetPasswordForEmail(input.email));
+  else check(await supabase.auth.resend({ type: 'signup', email: input.email }));
+  return { sentTo: input.email };
 }
 
-export function requestPasswordReset(email: string) {
-  // Real APIs answer the same way whether or not the email exists,
-  // so attackers can't use this form to discover accounts.
-  return respond(() => ({ sentTo: email }));
+/** Confirms the sign-up code. Supabase then signs the user in; the session listener does the rest. */
+export async function verifyEmail(input: { email: string; code: string }) {
+  check(await supabase.auth.verifyOtp({ email: input.email, token: input.code, type: 'signup' }));
 }
 
-export function verifyResetCode(input: { email: string; code: string }) {
-  return respond(() => {
-    if (!isValidCode(input.code)) throw badCode();
-    const resetToken = newId('rst');
-    resetTokens.add(resetToken);
-    return { resetToken };
-  });
+// --- Log in ---
+
+export type LogInResult = { status: 'ok' } | { status: 'mfa_required' } | { status: 'unconfirmed' };
+
+export async function logIn(input: { email: string; password: string }): Promise<LogInResult> {
+  const { error } = await supabase.auth.signInWithPassword(input);
+  if (error?.code === 'email_not_confirmed') {
+    // Send a fresh code so the verify screen has something to check.
+    await supabase.auth.resend({ type: 'signup', email: input.email });
+    return { status: 'unconfirmed' };
+  }
+  if (error) throw toApiError(error);
+  return (await needsMfa()) ? { status: 'mfa_required' } : { status: 'ok' };
 }
 
-export function resetPassword(input: { resetToken: string; password: string }) {
-  return respond(() => {
-    if (!resetTokens.delete(input.resetToken)) {
-      throw new ApiError('This reset link expired. Start again from "Forgot password".', 410);
-    }
-    return { ok: true };
-  });
+/** Second login step: an authenticator code, or one of the backup codes. */
+export async function verifyMfa(input: { code: string; method: 'totp' | 'backup' }) {
+  if (input.method === 'backup') {
+    check(await supabase.auth.mfa.recoveryCodes.verify({ code: input.code }));
+    return;
+  }
+  const factors = check(await supabase.auth.mfa.listFactors());
+  const factor = factors.totp[0];
+  if (!factor) throw new ApiError('Two-step verification is no longer set up. Log in again.', 404);
+  check(await supabase.auth.mfa.challengeAndVerify({ factorId: factor.id, code: input.code }));
 }
+
+// --- Forgot password ---
+
+export async function requestPasswordReset(email: string) {
+  check(await supabase.auth.resetPasswordForEmail(email));
+  return { sentTo: email };
+}
+
+/** Checking the reset code signs the user in, so they're allowed to set a new password. */
+export async function verifyResetCode(input: { email: string; code: string }) {
+  check(await supabase.auth.verifyOtp({ email: input.email, token: input.code, type: 'recovery' }));
+  return { needsMfa: await needsMfa() };
+}
+
+export async function resetPassword(password: string) {
+  check(await supabase.auth.updateUser({ password }));
+}
+
+// --- Two-step verification ---
 
 export interface MfaSetup {
+  factorId: string;
+  /** SVG markup of the QR code */
+  qrSvg: string;
   secret: string;
-  /** What the QR code encodes; authenticator apps read this. */
-  otpauthUri: string;
+  /** otpauth:// URI the QR encodes */
+  uri: string;
 }
 
-export function startMfaSetup() {
-  return respond<MfaSetup>(() => {
-    pendingMfaSecret = randomString(32, BASE32);
-    const label = encodeURIComponent(`Monivo:${db.user.email}`);
-    return { secret: pendingMfaSecret, otpauthUri: `otpauth://totp/${label}?secret=${pendingMfaSecret}&issuer=Monivo` };
-  });
+export async function startMfaSetup(): Promise<MfaSetup> {
+  // An abandoned earlier attempt leaves an unverified factor behind; clear it first.
+  const factors = check(await supabase.auth.mfa.listFactors());
+  for (const f of factors.all) {
+    if (f.factor_type === 'totp' && f.status === 'unverified') await supabase.auth.mfa.unenroll({ factorId: f.id });
+  }
+  const data = check(await supabase.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'Authenticator app' }));
+  return { factorId: data.id, qrSvg: data.totp.qr_code, secret: data.totp.secret, uri: data.totp.uri };
 }
 
-/** Proves the authenticator works, turns MFA on and issues fresh backup codes. */
-export function confirmMfaSetup(code: string) {
-  return respond(() => {
-    if (!pendingMfaSecret) throw new ApiError('Setup expired. Close this screen and start again.', 410);
-    if (!isValidCode(code)) throw badCode();
-    db.auth = { mfaSecret: pendingMfaSecret, backupCodes: generateBackupCodes() };
-    db.user.mfaEnabled = true;
-    pendingMfaSecret = null;
-    return { backupCodes: db.auth.backupCodes };
-  });
+/** "K4M9X7QP2AB8HT3Z" → "K4M9-X7QP-2AB8-HT3Z": easier to copy onto paper. */
+const formatCode = (code: string) => (code.toUpperCase().match(/.{1,4}/g) ?? [code]).join('-');
+
+export type BackupCodesResult = { codes: string[] } | { codes: null; reason: 'not_enabled' };
+
+function codesOrUnavailable(result: { data: { codes: string[] } | null; error: AuthError | null }): BackupCodesResult {
+  if (result.error?.code?.includes('not_enabled')) return { codes: null, reason: 'not_enabled' };
+  if (result.error) throw toApiError(result.error);
+  if (!result.data) throw new ApiError("We couldn't create backup codes. Please try again.", 500);
+  return { codes: result.data.codes.map(formatCode) };
 }
 
-export function disableMfa() {
-  return respond(() => {
-    db.user.mfaEnabled = false;
-    db.auth = { mfaSecret: null, backupCodes: [] };
-    return db.user;
-  });
+/** Verifies the first code (turning two-step on), then issues backup codes. */
+export async function confirmMfaSetup(input: { factorId: string; code: string }): Promise<BackupCodesResult> {
+  check(await supabase.auth.mfa.challengeAndVerify({ factorId: input.factorId, code: input.code }));
+  return codesOrUnavailable(await supabase.auth.mfa.recoveryCodes.generate({ friendlyName: 'Backup codes' }));
 }
 
-export function getBackupCodes() {
-  return respond(() => db.auth.backupCodes);
+export type BackupCodesStatus = { total: number; remaining: number } | { total: 0; remaining: 0; missing: true };
+
+export async function getBackupCodesStatus(): Promise<BackupCodesStatus> {
+  const result = await supabase.auth.mfa.recoveryCodes.getStatus();
+  const code = result.error?.code;
+  if (code === 'mfa_factor_not_found' || code?.includes('not_enabled')) return { total: 0, remaining: 0, missing: true };
+  const data = check(result);
+  return { total: data.total, remaining: data.remaining };
 }
 
-export function regenerateBackupCodes() {
-  return respond(() => {
-    db.auth.backupCodes = generateBackupCodes();
-    return db.auth.backupCodes;
-  });
+/** New set; the old codes stop working immediately. */
+export async function regenerateBackupCodes(): Promise<BackupCodesResult> {
+  const result = await supabase.auth.mfa.recoveryCodes.regenerate();
+  if (result.error?.code === 'mfa_factor_not_found') {
+    return codesOrUnavailable(await supabase.auth.mfa.recoveryCodes.generate({ friendlyName: 'Backup codes' }));
+  }
+  return codesOrUnavailable(result);
 }
 
-export function logOut() {
-  return respond(() => ({ ok: true }));
+export async function disableMfa() {
+  // Backup codes can't outlive the authenticator, so they go first.
+  const codes = await supabase.auth.mfa.recoveryCodes.unenroll();
+  if (codes.error && codes.error.code !== 'mfa_factor_not_found' && !codes.error.code?.includes('not_enabled')) {
+    throw toApiError(codes.error);
+  }
+  const factors = check(await supabase.auth.mfa.listFactors());
+  for (const f of factors.totp) check(await supabase.auth.mfa.unenroll({ factorId: f.id }));
+  // Refresh so the session no longer claims a second factor.
+  await supabase.auth.refreshSession();
 }
 
-// --- helpers ---
+// --- Account ---
 
-const BASE32 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-// No 0/O or 1/I/L: backup codes get read off paper, so avoid look-alikes.
-const BACKUP_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
-
-function randomString(length: number, alphabet: string) {
-  return Array.from({ length }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join('');
+export async function logOut() {
+  const { error } = await supabase.auth.signOut();
+  if (error) throw toApiError(error);
 }
 
-function generateBackupCodes(count = 10) {
-  return Array.from({ length: count }, () => `${randomString(4, BACKUP_ALPHABET)}-${randomString(4, BACKUP_ALPHABET)}`);
-}
-
-function normalizeBackupCode(code: string) {
-  const raw = code.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
-  return `${raw.slice(0, 4)}-${raw.slice(4)}`;
+/** Deleting an auth user needs admin rights, so it runs in a server-side Edge Function. */
+export async function deleteAccount() {
+  const { error } = await supabase.functions.invoke('delete-account', { method: 'POST' });
+  if (error) throw new ApiError("We couldn't delete your account. Please try again.", 500);
+  await supabase.auth.signOut({ scope: 'local' });
 }

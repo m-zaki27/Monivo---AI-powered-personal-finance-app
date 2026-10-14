@@ -1,16 +1,20 @@
-import { router } from 'expo-router';
+import { Redirect, router } from 'expo-router';
 import { View } from 'react-native';
 import { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GradientMesh } from '@/components/auth';
 import { Button, Logo, Text } from '@/components/ui';
+import { useSession } from '@/hooks';
 import { AnimatedView } from '@/lib/animated';
 
 const enter = (i: number) => FadeInDown.duration(500).delay(120 + i * 90);
 
 export default function WelcomeScreen() {
   const insets = useSafeAreaInsets();
+  const { status } = useSession();
+  // Reopening the app mid-login (password done, code not yet) resumes at the code screen.
+  if (status === 'mfaRequired') return <Redirect href="/mfa" />;
   return (
     <View className="flex-1 bg-bg">
       <GradientMesh />

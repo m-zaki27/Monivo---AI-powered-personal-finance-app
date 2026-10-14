@@ -17,7 +17,7 @@ export function useMe() {
 export function useUpdateMe() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (patch: Partial<Omit<User, 'id'>>) => userApi.updateMe(patch),
+    mutationFn: (patch: Parameters<typeof userApi.updateMe>[0]) => userApi.updateMe(patch),
     onMutate: async (patch) => {
       await qc.cancelQueries({ queryKey: queryKeys.me });
       const previous = qc.getQueryData<User>(queryKeys.me);

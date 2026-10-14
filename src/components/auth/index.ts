@@ -4,6 +4,6 @@ export * from './BackupCodeGrid';
 export * from './CodeEntry';
 export * from './CopyButton';
 export * from './GradientMesh';
-export * from './QrPlaceholder';
+export * from './QrCode';
 export * from './ResendTimer';
 export * from './SecretKey';

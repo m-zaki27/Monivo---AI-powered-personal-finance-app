@@ -1,5 +1,5 @@
 import { Check } from 'lucide-react-native';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { FadeInDown, ZoomIn } from 'react-native-reanimated';
 
@@ -14,6 +14,15 @@ export default function DoneStep() {
   const { colors, gradients } = useTheme();
   const { completeOnboarding } = useSession();
   const me = useMe();
+  const [finishing, setFinishing] = useState(false);
+  const finish = async () => {
+    setFinishing(true);
+    try {
+      await completeOnboarding();
+    } finally {
+      setFinishing(false);
+    }
+  };
 
   useEffect(() => {
     haptics.success();
@@ -25,7 +34,7 @@ export default function DoneStep() {
         step={4}
         noBack
         // Flipping `onboarded` is all it takes: the root guard swaps in the tabs.
-        footer={<Button title="Go to dashboard" onPress={completeOnboarding} fullWidth />}
+        footer={<Button title="Go to dashboard" loading={finishing} onPress={finish} fullWidth />}
       >
         <View className="flex-1 items-center justify-center gap-6">
           <AnimatedView

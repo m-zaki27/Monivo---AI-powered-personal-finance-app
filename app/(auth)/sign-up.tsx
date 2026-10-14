@@ -21,8 +21,10 @@ export default function SignUpScreen() {
 
   const submit = handleSubmit(async ({ name, email, password }) => {
     try {
-      await signUp.mutateAsync({ name, email, password });
-      router.push({ pathname: '/verify', params: { email, purpose: 'signup' } });
+      const { needsVerification } = await signUp.mutateAsync({ name, email, password });
+      // If the project doesn't require email confirmation, Supabase signs them in straight away
+      // and the guard moves on to onboarding; otherwise they enter the emailed code.
+      if (needsVerification) router.push({ pathname: '/verify', params: { email, purpose: 'signup' } });
     } catch (e) {
       applyApiError(e, setError, ['email']);
     }

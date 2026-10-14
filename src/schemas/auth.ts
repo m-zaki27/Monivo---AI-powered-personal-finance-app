@@ -48,18 +48,14 @@ export const resetPasswordSchema = z
   .refine((d) => d.password === d.confirm, { path: ['confirm'], message: "Passwords don't match" });
 export type ResetPasswordForm = z.infer<typeof resetPasswordSchema>;
 
-/** Backup codes look like "K7QD-92XM"; the dash and case are optional when typing. */
+/**
+ * Backup codes look like "K4M9-X7QP-2AB8-HT3Z". The server ignores dashes,
+ * spaces and letter case, so we only check it's roughly the right shape.
+ */
 export const backupCodeSchema = z.object({
   code: z
     .string()
     .trim()
-    .regex(/^[A-Za-z0-9]{4}-?[A-Za-z0-9]{4}$/, 'Backup codes have 8 letters and numbers'),
+    .refine((v) => /^[A-Za-z0-9]{8,32}$/.test(v.replace(/[\s-]/g, '')), 'Backup codes are letters and numbers, like K4M9-X7QP-2AB8-HT3Z'),
 });
 export type BackupCodeForm = z.infer<typeof backupCodeSchema>;
-
-/** What we keep on the device. Validated on load so a corrupt value can't crash the app. */
-export const sessionSchema = z.object({
-  token: z.string().min(1),
-  onboarded: z.boolean(),
-});
-export type Session = z.infer<typeof sessionSchema>;

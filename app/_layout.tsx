@@ -19,9 +19,11 @@ import { LogBox } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { SetupNeeded } from '@/components/SetupNeeded';
 import { ToastProvider } from '@/components/ui';
 import { queryClient } from '@/hooks/queryClient';
 import { SessionProvider, useSession } from '@/hooks/useSession';
+import { isSupabaseConfigured } from '@/lib/supabase';
 import { ThemeProvider, useTheme } from '@/theme';
 
 // Dev-only React Native warning on Android: a touch that *started* outside the
@@ -66,9 +68,9 @@ export default function RootLayout() {
 
 function RootStack() {
   const { colors, isDark } = useTheme();
-  const { session, isHydrated } = useSession();
-  const signedIn = !!session;
-  const onboarded = !!session?.onboarded;
+  const { status, onboarded, isHydrated } = useSession();
+  // Two-step-pending and mid-password-reset users stay in the auth group until they finish.
+  const signedIn = status === 'signedIn';
 
   // Keep the splash up until we know which group to show — no flash of Welcome
   // for someone who is already signed in.
@@ -77,6 +79,7 @@ function RootStack() {
   }, [isHydrated]);
 
   if (!isHydrated) return null;
+  if (!isSupabaseConfigured) return <SetupNeeded />;
 
   /*
    * Route guards. Exactly one group is reachable at a time; when the session

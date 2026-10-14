@@ -4,7 +4,7 @@ import { Bell, Coins, Download, LogOut, Mail, Palette, Target } from 'lucide-rea
 import { useState } from 'react';
 import { View } from 'react-native';
 
-import { ProfileCard, SecuritySection, SettingsRow, SettingsSection, useExportAll } from '@/components/settings';
+import { DeleteAccountRow, ProfileCard, SecuritySection, SettingsRow, SettingsSection, useExportAll } from '@/components/settings';
 import { Dialog, Header, Screen, SegmentedControl, Text } from '@/components/ui';
 import { useBudget, useCurrency, useMe, useSession, useUpdateMe } from '@/hooks';
 import { withAlpha } from '@/lib/color';
@@ -84,6 +84,7 @@ export default function SettingsScreen() {
           onPress={exporting ? undefined : exportAll}
         />
         <SettingsRow icon={LogOut} label="Log out" destructive onPress={() => setConfirmLogout(true)} />
+        <DeleteAccountRow />
       </SettingsSection>
 
       <Text variant="caption" tone="muted" center className="pb-2">
@@ -100,7 +101,7 @@ export default function SettingsScreen() {
         onConfirm={() => {
           setConfirmLogout(false);
           // The route guards take it from here: signed out → Welcome.
-          signOut();
+          void signOut();
         }}
       />
     </Screen>

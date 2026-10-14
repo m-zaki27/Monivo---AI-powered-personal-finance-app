@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
 
-import { AuthScaffold, CodeEntry, QrPlaceholder, SecretKey } from '@/components/auth';
+import { AuthScaffold, CodeEntry, QrCode, SecretKey } from '@/components/auth';
 import { ErrorState, Skeleton, Text } from '@/components/ui';
 import { useConfirmMfaSetup, useMfaSetup } from '@/hooks';
 
@@ -11,7 +11,8 @@ export default function MfaSetupScreen() {
   const confirm = useConfirmMfaSetup();
 
   const submit = async (code: string) => {
-    await confirm.mutateAsync(code);
+    if (!setup.data) return;
+    await confirm.mutateAsync({ factorId: setup.data.factorId, code });
     router.replace({ pathname: '/backup-codes', params: { fromSetup: '1' } });
   };
 
@@ -31,7 +32,7 @@ export default function MfaSetupScreen() {
       ) : (
         <View className="gap-8">
           <Step n={1} title="Scan this code with your authenticator app">
-            <QrPlaceholder value={setup.data.otpauthUri} />
+            <QrCode svg={setup.data.qrSvg} />
           </Step>
           <Step n={2} title="Can't scan? Enter this key instead">
             <SecretKey secret={setup.data.secret} />

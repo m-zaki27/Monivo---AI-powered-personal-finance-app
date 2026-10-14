@@ -20,6 +20,7 @@ export const queryKeys = {
   auth: {
     mfaSetup: ['auth', 'mfaSetup'] as const,
     backupCodes: ['auth', 'backupCodes'] as const,
+    backupStatus: ['auth', 'backupStatus'] as const,
   },
   summary: (month: string) => ['summary', month] as const,
   summaryAll: ['summary'] as const,

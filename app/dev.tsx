@@ -21,13 +21,13 @@ type Preview = ColorSchemeName | 'both';
 export default function DevScreen() {
   const [preview, setPreview] = useState<Preview>('both');
   const schemes: ColorSchemeName[] = preview === 'both' ? ['dark', 'light'] : [preview];
-  const { session } = useSession();
+  const { status, onboarded } = useSession();
 
   // This screen sits outside the route guards, so after "Log out" there may be
   // no history left. Fall back to whichever screen the session allows.
   const leave = () => {
     if (router.canGoBack()) return router.back();
-    router.replace(!session ? '/welcome' : !session.onboarded ? '/currency' : '/');
+    router.replace(status !== 'signedIn' ? '/welcome' : !onboarded ? '/currency' : '/');
   };
 
   return (

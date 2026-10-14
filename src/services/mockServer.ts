@@ -19,8 +19,6 @@ export const db = {
   transactions: clone(mockTransactions),
   categories: clone(mockCategories),
   budget: clone(mockBudget),
-  /** Two-step verification state (never sent to the client as-is). */
-  auth: { mfaSecret: null as string | null, backupCodes: [] as string[] },
 };
 
 /** Toggled from the /dev screen to exercise loading and error states. */

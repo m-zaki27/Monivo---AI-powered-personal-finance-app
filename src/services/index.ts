@@ -9,6 +9,6 @@ export { ApiError, mockConfig } from './mockServer';
 export type { TransactionFilters, NewTransaction } from './transactions';
 export type { MonthSummary, CategorySpend } from './budget';
 export type { NewAccount } from './accounts';
-export type { LogInResult, MfaSetup } from './auth';
+export type { BackupCodesResult, BackupCodesStatus, CodePurpose, LogInResult, MfaSetup } from './auth';
 export type { ParsedItem, ReceiptExtraction } from './ai';
 export type { AnswerCard, AssistantReply } from './assistant';

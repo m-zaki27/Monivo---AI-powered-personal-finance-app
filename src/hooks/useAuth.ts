@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { authApi, userApi } from '@/services';
+import { authApi, userApi, type BackupCodesResult } from '@/services';
 
 import { queryKeys } from './queryKeys';
 
@@ -17,11 +17,13 @@ export const useVerifyMfa = () => useMutation({ mutationFn: authApi.verifyMfa })
 export const useRequestPasswordReset = () => useMutation({ mutationFn: authApi.requestPasswordReset });
 export const useVerifyResetCode = () => useMutation({ mutationFn: authApi.verifyResetCode });
 export const useResetPassword = () => useMutation({ mutationFn: authApi.resetPassword });
+/** Deletes the signed-in user (not to be confused with useDeleteAccount for money accounts). */
+export const useDeleteMyAccount = () => useMutation({ mutationFn: authApi.deleteAccount });
 
 /**
- * Starting MFA setup creates a secret. staleTime: Infinity keeps the same
- * secret while the screen is open; gcTime: 0 throws it away on leaving, so
- * the next attempt gets a fresh one.
+ * Starting MFA setup enrolls a new (unverified) factor on the server.
+ * staleTime: Infinity keeps the same QR code while the screen is open;
+ * gcTime: 0 throws it away on leaving, so the next attempt starts fresh.
  */
 export function useMfaSetup() {
   return useQuery({
@@ -29,29 +31,55 @@ export function useMfaSetup() {
     queryFn: authApi.startMfaSetup,
     staleTime: Infinity,
     gcTime: 0,
+    retry: false,
   });
+}
+
+/** Freshly issued codes live only in memory: the server can never show them again. */
+function useStoreNewCodes() {
+  const qc = useQueryClient();
+  return (result: BackupCodesResult) => {
+    qc.setQueryData(queryKeys.auth.backupCodes, result);
+    return Promise.all([
+      qc.invalidateQueries({ queryKey: queryKeys.me }),
+      qc.invalidateQueries({ queryKey: queryKeys.auth.backupStatus }),
+    ]);
+  };
 }
 
 export function useConfirmMfaSetup() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: authApi.confirmMfaSetup,
-    onSuccess: ({ backupCodes }) => {
-      qc.setQueryData(queryKeys.auth.backupCodes, backupCodes);
-      return qc.invalidateQueries({ queryKey: queryKeys.me });
-    },
-  });
-}
-
-export function useBackupCodes() {
-  return useQuery({ queryKey: queryKeys.auth.backupCodes, queryFn: authApi.getBackupCodes });
+  const store = useStoreNewCodes();
+  return useMutation({ mutationFn: authApi.confirmMfaSetup, onSuccess: store });
 }
 
 export function useRegenerateBackupCodes() {
+  const store = useStoreNewCodes();
+  return useMutation({ mutationFn: authApi.regenerateBackupCodes, onSuccess: store });
+}
+
+/** Codes generated in this session (null once you leave the backup codes screen). */
+export function useNewBackupCodes() {
+  return useQuery<BackupCodesResult | null>({
+    queryKey: queryKeys.auth.backupCodes,
+    queryFn: () => null,
+    staleTime: Infinity,
+    gcTime: 0,
+  });
+}
+
+export function useBackupCodesStatus() {
+  return useQuery({ queryKey: queryKeys.auth.backupStatus, queryFn: authApi.getBackupCodesStatus });
+}
+
+export function useDisableMfa() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: authApi.regenerateBackupCodes,
-    onSuccess: (codes) => qc.setQueryData(queryKeys.auth.backupCodes, codes),
+    mutationFn: authApi.disableMfa,
+    onSuccess: () =>
+      Promise.all([
+        qc.invalidateQueries({ queryKey: queryKeys.me }),
+        qc.invalidateQueries({ queryKey: queryKeys.auth.backupStatus }),
+      ]),
   });
 }
 
@@ -62,17 +90,6 @@ export function useCompleteOnboarding() {
     onSuccess: (user) => {
       qc.setQueryData(queryKeys.me, user);
       return qc.invalidateQueries({ queryKey: queryKeys.accounts.all });
-    },
-  });
-}
-
-export function useDisableMfa() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: authApi.disableMfa,
-    onSuccess: (user) => {
-      qc.setQueryData(queryKeys.me, user);
-      qc.setQueryData(queryKeys.auth.backupCodes, []);
     },
   });
 }

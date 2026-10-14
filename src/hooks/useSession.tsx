@@ -1,63 +1,89 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { Session, User } from '@supabase/supabase-js';
 import { useQueryClient } from '@tanstack/react-query';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
-import { sessionSchema, type Session } from '@/schemas/auth';
+import { supabase } from '@/lib/supabase';
 import { authApi } from '@/services';
 
-const STORAGE_KEY = 'monivo.session';
+/**
+ * - signedOut: no session
+ * - mfaRequired: password accepted, authenticator code still needed
+ * - recovering: signed in by a password-reset code, must set a new password first
+ * - signedIn: fully in
+ */
+export type SessionStatus = 'signedOut' | 'mfaRequired' | 'recovering' | 'signedIn';
 
 interface SessionContextValue {
-  session: Session | null;
+  status: SessionStatus;
+  user: User | null;
+  /** Finished onboarding (stored on the Supabase user until F1 adds a profiles table). */
+  onboarded: boolean;
   /** False until the saved session has been read from storage. */
   isHydrated: boolean;
-  signIn: (session: Session) => void;
-  completeOnboarding: () => void;
-  signOut: () => void;
+  /** Re-checks whether a second factor is still needed (after a code is verified). */
+  refresh: () => Promise<void>;
+  setRecovering: (value: boolean) => void;
+  completeOnboarding: () => Promise<void>;
+  signOut: () => Promise<void>;
 }
 
 const SessionContext = createContext<SessionContextValue | null>(null);
 
 /**
- * Who is signed in, and whether they've finished onboarding. This is client
- * state (not server data), so it lives in React context rather than TanStack
- * Query. The root layout's route guards read it: change the session and the
- * router moves the user to the right group by itself.
+ * Supabase owns the session (it saves, restores and refreshes tokens). This
+ * provider just listens and derives one `status` the route guards read: when
+ * Supabase signs someone in or out, the guards move them to the right screens.
  */
 export function SessionProvider({ children }: { children: ReactNode }) {
   const qc = useQueryClient();
   const [session, setSession] = useState<Session | null>(null);
+  const [mfaPending, setMfaPending] = useState(false);
+  const [recovering, setRecovering] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
 
-  useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY)
-      .then((raw) => {
-        const parsed = sessionSchema.safeParse(raw ? JSON.parse(raw) : null);
-        if (parsed.success) setSession(parsed.data);
-      })
-      .catch(() => {})
-      .finally(() => setIsHydrated(true));
+  const evaluate = useCallback(async (next: Session | null) => {
+    setSession(next);
+    setMfaPending(next ? await authApi.needsMfa().catch(() => false) : false);
   }, []);
 
-  // Persist after every change (but never before we've loaded, or we'd wipe it).
   useEffect(() => {
-    if (!isHydrated) return;
-    const write = session ? AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(session)) : AsyncStorage.removeItem(STORAGE_KEY);
-    write.catch(() => {});
-  }, [session, isHydrated]);
+    supabase.auth
+      .getSession()
+      .then(({ data }) => evaluate(data.session))
+      .finally(() => setIsHydrated(true));
 
-  const signIn = useCallback((s: Session) => setSession(s), []);
-  const completeOnboarding = useCallback(() => setSession((s) => (s ? { ...s, onboarded: true } : s)), []);
-  const signOut = useCallback(() => {
-    authApi.logOut().catch(() => {});
-    setSession(null);
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, next) => {
+      // Supabase warns against awaiting its own methods inside this callback
+      // (it can deadlock), so the follow-up check runs on the next tick.
+      setTimeout(() => void evaluate(next), 0);
+    });
+    return () => sub.subscription.unsubscribe();
+  }, [evaluate]);
+
+  const refresh = useCallback(async () => {
+    const { data } = await supabase.auth.getSession();
+    await evaluate(data.session);
+  }, [evaluate]);
+
+  const completeOnboarding = useCallback(async () => {
+    // USER_UPDATED fires afterwards, the session updates, and the guard swaps in the tabs.
+    await supabase.auth.updateUser({ data: { onboarded: true } });
+  }, []);
+
+  const signOut = useCallback(async () => {
+    setRecovering(false);
+    await authApi.logOut().catch(() => {});
     // Drop every cached query so the next user never sees this one's data.
     qc.clear();
   }, [qc]);
 
+  const status: SessionStatus = !session ? 'signedOut' : recovering ? 'recovering' : mfaPending ? 'mfaRequired' : 'signedIn';
+  const user = session?.user ?? null;
+  const onboarded = user?.user_metadata?.onboarded === true;
+
   const value = useMemo(
-    () => ({ session, isHydrated, signIn, completeOnboarding, signOut }),
-    [session, isHydrated, signIn, completeOnboarding, signOut],
+    () => ({ status, user, onboarded, isHydrated, refresh, setRecovering, completeOnboarding, signOut }),
+    [status, user, onboarded, isHydrated, refresh, completeOnboarding, signOut],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
