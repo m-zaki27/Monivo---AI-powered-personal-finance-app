@@ -1,6 +1,6 @@
 import type { SupabaseClient } from 'npm:@supabase/supabase-js@2';
 
-import { AiError, generateJson } from './gemini.ts';
+import { AiError, generateJson } from '../_shared/gemini.ts';
 
 /**
  * The assistant. The *numbers* are always computed here from the user's own

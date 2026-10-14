@@ -1,10 +1,10 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
+import { AiError } from '../_shared/gemini.ts';
 import { corsHeaders, json } from '../_shared/http.ts';
 
 import { answer } from './assistant.ts';
 import { parseVoice, scanReceipt } from './extract.ts';
-import { AiError } from './gemini.ts';
 
 /**
  * One endpoint for every AI feature: { action: 'scan' | 'voice' | 'assistant', ... }.

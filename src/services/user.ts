@@ -22,6 +22,11 @@ export async function getMe(): Promise<User> {
     supabase.from('profiles').select('*').eq('id', id).single().then(unwrap),
     supabase.auth.mfa.listFactors(),
   ]);
+  // Emails ("this month", "Monday morning") use the user's own time zone; keep it current.
+  const deviceTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  if (deviceTz && deviceTz !== profile.timezone) {
+    void supabase.from('profiles').update({ timezone: deviceTz }).eq('id', id).then(() => undefined);
+  }
   return {
     id,
     email,

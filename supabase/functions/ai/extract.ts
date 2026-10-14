@@ -1,6 +1,6 @@
 import type { SupabaseClient } from 'npm:@supabase/supabase-js@2';
 
-import { AiError, generateJson } from './gemini.ts';
+import { AiError, generateJson } from '../_shared/gemini.ts';
 
 /** Receipt photos and voice notes: turn them into structured transactions. */
 

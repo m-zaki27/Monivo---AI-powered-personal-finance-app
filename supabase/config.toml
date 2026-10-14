@@ -436,3 +436,11 @@ verify_jwt = false
 
 [functions.ai]
 verify_jwt = false
+
+# Called by pg_cron with the Vault secret (checked inside), not a user JWT.
+[functions.notify]
+verify_jwt = false
+
+# Opened from email links; the signed URL is the authorisation.
+[functions.unsubscribe]
+verify_jwt = false

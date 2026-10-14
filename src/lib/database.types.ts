@@ -53,6 +53,27 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_usage: {
+        Row: {
+          count: number
+          day: string
+          kind: string
+          user_id: string
+        }
+        Insert: {
+          count?: number
+          day?: string
+          kind: string
+          user_id: string
+        }
+        Update: {
+          count?: number
+          day?: string
+          kind?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       budgets: {
         Row: {
           alert_threshold: number
@@ -104,6 +125,27 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_log: {
+        Row: {
+          kind: string
+          period: string
+          sent_at: string
+          user_id: string
+        }
+        Insert: {
+          kind: string
+          period: string
+          sent_at?: string
+          user_id: string
+        }
+        Update: {
+          kind?: string
+          period?: string
+          sent_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -113,6 +155,7 @@ export type Database = {
           last_name: string
           notify_push: boolean
           notify_weekly_recap: boolean
+          timezone: string
           updated_at: string
         }
         Insert: {
@@ -123,6 +166,7 @@ export type Database = {
           last_name?: string
           notify_push?: boolean
           notify_weekly_recap?: boolean
+          timezone?: string
           updated_at?: string
         }
         Update: {
@@ -133,6 +177,7 @@ export type Database = {
           last_name?: string
           notify_push?: boolean
           notify_weekly_recap?: boolean
+          timezone?: string
           updated_at?: string
         }
         Relationships: []
@@ -222,12 +267,45 @@ export type Database = {
       }
     }
     Functions: {
+      budget_alert_candidates: {
+        Args: never
+        Returns: {
+          alert_threshold: number
+          currency: string
+          email: string
+          first_name: string
+          monthly_limit: number
+          period: string
+          spent: number
+          timezone: string
+          user_id: string
+        }[]
+      }
+      check_cron_secret: { Args: { p_secret: string }; Returns: boolean }
+      consume_ai_quota: {
+        Args: { p_kind: string; p_limit: number }
+        Returns: boolean
+      }
       has_verified_mfa: { Args: never; Returns: boolean }
+      invoke_notify: { Args: { p_mode: string }; Returns: undefined }
       month_summary: { Args: { p_from: string; p_to: string }; Returns: Json }
       my_account_count: { Args: never; Returns: number }
       set_default_account: {
         Args: { p_account_id: string }
         Returns: undefined
+      }
+      weekly_recap_candidates: {
+        Args: never
+        Returns: {
+          currency: string
+          email: string
+          first_name: string
+          period: string
+          timezone: string
+          user_id: string
+          week_end: string
+          week_start: string
+        }[]
       }
     }
     Enums: {
