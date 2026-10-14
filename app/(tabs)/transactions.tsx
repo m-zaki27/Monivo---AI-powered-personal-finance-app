@@ -49,16 +49,18 @@ export default function TransactionsScreen() {
   const hasFilters = !!(filters.search || filters.type || filters.accountId);
 
   // Stable callback so memoized rows don't all re-render on every keystroke.
+  // `mutate` functions are stable across renders; the mutation objects aren't.
+  const { mutate: removeTx } = remove;
+  const { mutate: restoreTx } = restore;
   const onDelete = useCallback(
     (t: Transaction) => {
-      remove.mutate(t.id, { onError: (e) => toast.show({ message: e.message, tone: 'error' }) });
+      removeTx(t.id, { onError: (e) => toast.show({ message: e.message, tone: 'error' }) });
       toast.show({
         message: `Deleted ${t.merchant}`,
-        action: { label: 'Undo', onPress: () => restore.mutate(t) },
+        action: { label: 'Undo', onPress: () => restoreTx(t) },
       });
     },
-    // `mutate` functions are stable across renders; the mutation objects aren't.
-    [remove.mutate, restore.mutate, toast],
+    [removeTx, restoreTx, toast],
   );
 
   const onRefresh = async () => {

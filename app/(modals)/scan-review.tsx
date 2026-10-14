@@ -31,6 +31,7 @@ export default function ScanReviewScreen() {
     });
 
   // Start reading as soon as the screen opens (once).
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- deliberately once, not on every render
   useEffect(run, []);
 
   const submit = form.handleSubmit((v) => {

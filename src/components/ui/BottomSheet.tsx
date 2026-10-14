@@ -38,33 +38,37 @@ export function BottomSheet({ visible, onClose, title, subtitle, children }: Bot
   const translateY = useSharedValue(SCREEN_H);
   const backdrop = useSharedValue(0);
 
+  // Mount as soon as it's asked to show (during render, so the first frame already has the Modal).
+  if (visible && !mounted) setMounted(true);
+
   useEffect(() => {
     if (visible) {
-      setMounted(true);
-      translateY.value = withSpring(0, motion.spring);
-      backdrop.value = withTiming(1, { duration: motion.base });
+      translateY.set(withSpring(0, motion.spring));
+      backdrop.set(withTiming(1, { duration: motion.base }));
     } else if (mounted) {
-      backdrop.value = withTiming(0, { duration: motion.base });
-      translateY.value = withTiming(SCREEN_H, { duration: motion.base }, (done) => {
-        if (done) scheduleOnRN(setMounted, false);
-      });
+      backdrop.set(withTiming(0, { duration: motion.base }));
+      translateY.set(
+        withTiming(SCREEN_H, { duration: motion.base }, (done) => {
+          if (done) scheduleOnRN(setMounted, false);
+        }),
+      );
     }
   }, [visible, mounted, translateY, backdrop]);
 
   const pan = Gesture.Pan()
     .onUpdate((e) => {
-      translateY.value = Math.max(0, e.translationY);
+      translateY.set(Math.max(0, e.translationY));
     })
     .onEnd((e) => {
       if (e.translationY > DISMISS_DISTANCE || e.velocityY > DISMISS_VELOCITY) {
         scheduleOnRN(onClose);
       } else {
-        translateY.value = withSpring(0, motion.spring);
+        translateY.set(withSpring(0, motion.spring));
       }
     });
 
-  const sheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: translateY.value }] }));
-  const backdropStyle = useAnimatedStyle(() => ({ opacity: backdrop.value }));
+  const sheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: translateY.get() }] }));
+  const backdropStyle = useAnimatedStyle(() => ({ opacity: backdrop.get() }));
 
   if (!mounted) return null;
 

@@ -1,5 +1,5 @@
 import { ChevronRight, PencilLine, Star, Trash2, type LucideIcon } from 'lucide-react-native';
-import { useRef } from 'react';
+import { useState } from 'react';
 import { View } from 'react-native';
 
 import { BottomSheet, PressableScale, Text } from '@/components/ui';
@@ -18,9 +18,10 @@ interface AccountActionsSheetProps {
 export function AccountActionsSheet({ account, onClose, onSetDefault, onEdit, onDelete }: AccountActionsSheetProps) {
   const { colors } = useTheme();
   // Remember the last account so the sheet keeps its content while it slides away.
-  const last = useRef(account);
-  if (account) last.current = account;
-  const shown = account ?? last.current;
+  // (Updating state during render is React's pattern for "remember a previous prop".)
+  const [last, setLast] = useState(account);
+  if (account && account !== last) setLast(account);
+  const shown = account ?? last;
 
   const run = (fn: (a: AccountWithBalance) => void) => () => {
     onClose();

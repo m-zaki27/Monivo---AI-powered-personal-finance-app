@@ -43,7 +43,9 @@ export function useVoiceCapture(onFinish: (input: VoiceInput) => void) {
   const modeRef = useRef<CaptureMode>('real');
   // Always call the latest onFinish without restarting anything.
   const onFinishRef = useRef(onFinish);
-  onFinishRef.current = onFinish;
+  useEffect(() => {
+    onFinishRef.current = onFinish;
+  }, [onFinish]);
 
   // clearTimeout also clears intervals: timers and intervals share one ID pool.
   const clearTimers = () => {

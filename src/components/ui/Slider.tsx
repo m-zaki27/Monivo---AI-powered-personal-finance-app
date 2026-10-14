@@ -37,13 +37,11 @@ export function Slider({ value, min, max, step, onChange, color, accessibilityLa
   const startX = useSharedValue(0);
   const lastStep = useSharedValue(value);
 
-  const toX = (v: number) => ((v - min) / (max - min)) * width;
-
   // Follow outside changes (initial value, screen-reader adjustments, layout).
   useEffect(() => {
-    x.value = toX(value);
-    lastStep.value = value;
-  }, [value, width]); // toX only depends on these
+    x.set(((value - min) / (max - min)) * width);
+    lastStep.set(value);
+  }, [value, width, min, max, x, lastStep]);
 
   const emit = (v: number) => {
     haptics.select();
@@ -54,11 +52,11 @@ export function Slider({ value, min, max, step, onChange, color, accessibilityLa
   const update = (px: number) => {
     'worklet';
     const clamped = Math.min(Math.max(px, 0), width);
-    x.value = clamped;
+    x.set(clamped);
     const raw = min + (clamped / Math.max(width, 1)) * (max - min);
     const stepped = Math.round(raw / step) * step;
-    if (stepped !== lastStep.value) {
-      lastStep.value = stepped;
+    if (stepped !== lastStep.get()) {
+      lastStep.set(stepped);
       scheduleOnRN(emit, Number(stepped.toFixed(4)));
     }
   };
@@ -66,17 +64,17 @@ export function Slider({ value, min, max, step, onChange, color, accessibilityLa
   const pan = Gesture.Pan()
     .hitSlop({ vertical: 16 })
     .onBegin((e) => {
-      startX.value = e.x;
+      startX.set(e.x);
       update(e.x);
     })
-    .onUpdate((e) => update(startX.value + e.translationX))
+    .onUpdate((e) => update(startX.get() + e.translationX))
     .onFinalize(() => {
       // Snap the thumb onto the chosen step.
-      x.value = ((lastStep.value - min) / (max - min)) * width;
+      x.set(((lastStep.get() - min) / (max - min)) * width);
     });
 
-  const thumbStyle = useAnimatedStyle(() => ({ transform: [{ translateX: x.value - THUMB / 2 }] }));
-  const fillStyle = useAnimatedStyle(() => ({ width: x.value }));
+  const thumbStyle = useAnimatedStyle(() => ({ transform: [{ translateX: x.get() - THUMB / 2 }] }));
+  const fillStyle = useAnimatedStyle(() => ({ width: x.get() }));
 
   return (
     <View

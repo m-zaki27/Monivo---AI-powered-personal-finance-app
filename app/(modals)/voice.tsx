@@ -120,7 +120,7 @@ export default function VoiceScreen() {
               </Text>
             )}
             {view === 'error' && (
-              <ErrorState compact error={parse.error} onRetry={lastInput.current ? () => process(lastInput.current!) : undefined} />
+              <ErrorState compact error={parse.error} onRetry={() => lastInput.current && process(lastInput.current)} />
             )}
           </View>
         </View>

@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { FileKey2, RefreshCw, Share2 } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { Share, View } from 'react-native';
