@@ -1,7 +1,4 @@
-/**
- * Minimal Gemini client: one call that returns JSON matching a schema.
- * The key and model come from Supabase secrets, so they never reach the app.
- */
+/** Minimal Gemini JSON client; the key lives in Supabase secrets so it never reaches the app. */
 
 export class AiError extends Error {
   constructor(message: string, public status = 500) {
@@ -11,17 +8,12 @@ export class AiError extends Error {
 
 export type Part = { text: string } | { inlineData: { mimeType: string; data: string } };
 
-/**
- * Tried in order. Free-tier models are sometimes overloaded ("high demand",
- * 503) or rate-limited (429); falling back to a sibling model keeps the
- * feature working instead of failing the user. Override with GEMINI_MODELS.
- */
+/** Tried in order: free-tier models get overloaded (503) or rate-limited (429). Override with GEMINI_MODELS. */
 const MODELS = (Deno.env.get('GEMINI_MODELS') ?? 'gemini-3.8-flash,gemini-3.6-flash,gemini-3.5-flash-lite')
   .split(',')
   .map((m) => m.trim())
   .filter(Boolean);
 
-/** Worth trying another model: overloaded, rate-limited, or a temporary server error. */
 const RETRYABLE = new Set([429, 500, 503, 504]);
 /** A free-tier model under load can stall for minutes; give up on it and try the next. */
 const ATTEMPT_TIMEOUT_MS = 25_000;
@@ -40,7 +32,7 @@ export async function generateJson<T>(opts: {
     systemInstruction: { parts: [{ text: opts.system }] },
     contents: [{ role: 'user', parts: opts.parts }],
     generationConfig: {
-      // Low temperature: we want faithful extraction, not creativity.
+      // Low temperature: faithful extraction, not creativity.
       temperature: opts.temperature ?? 0.2,
       responseMimeType: 'application/json',
       responseSchema: opts.schema,
@@ -64,7 +56,6 @@ export async function generateJson<T>(opts: {
       continue;
     }
     if (res.ok || !RETRYABLE.has(res.status)) break;
-    // Log Google's error (it never contains the user's data) to the function logs.
     console.warn('Gemini unavailable, trying next model', model, res.status);
   }
 

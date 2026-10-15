@@ -1,19 +1,15 @@
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2';
 
 import { generateJson } from '../_shared/gemini.ts';
-import { json } from '../_shared/http.ts';
+import { json, safeEqual } from '../_shared/http.ts';
 import { sendEmail } from '../_shared/mailer.ts';
 import { unsubscribeUrl } from '../_shared/unsubscribe.ts';
 
 import { budgetAlertEmail, weeklyRecapEmail } from './templates.ts';
 
 /**
- * Sends due notification emails. Called by pg_cron (with the Vault cron
- * secret) every 15 minutes for budget alerts and hourly for weekly recaps.
- * Uses the service role: it reads across users, so it never runs for a user.
- *
- * Also accepts a manual "preview" (service-role key only) that renders one
- * user's email and sends it to a chosen address, without logging it.
+ * Called by pg_cron with the Vault secret. Uses the service role because it reads across users.
+ * A service-role-only "preview" mode sends one user's email to any address, unlogged.
  */
 
 /** Keeps each run well inside the free plan's time limit; the rest go next run. */
@@ -228,7 +224,7 @@ Deno.serve(async (req) => {
   // Cron proves itself with the Vault secret; manual previews need the service-role key.
   const cronSecret = req.headers.get('x-cron-secret') ?? '';
   const bearer = (req.headers.get('Authorization') ?? '').replace(/^Bearer\s+/i, '');
-  const isAdmin = bearer === serviceKey;
+  const isAdmin = !!bearer && safeEqual(bearer, serviceKey);
   let isCron = false;
   if (cronSecret) {
     const { data } = await admin.rpc('check_cron_secret', { p_secret: cronSecret });
@@ -239,7 +235,7 @@ Deno.serve(async (req) => {
   const body = await req.json().catch(() => ({}));
   const cats = await loadCategories(admin);
 
-  // Manual preview: render one user's email and send it to `to`. Not logged.
+  // Preview sends are not logged.
   if (body.mode === 'preview' && isAdmin) {
     const { data: u } = await admin.from('profiles').select('id, first_name, currency, timezone').eq('id', body.userId).single();
     if (!u) return json({ error: 'No such user' }, 404);
@@ -274,7 +270,7 @@ Deno.serve(async (req) => {
     if (!(await claim(admin, c.user_id, kind, c.period))) continue;
     try {
       const mail = mode === 'recap' ? await buildWeeklyRecap(admin, c, cats) : await buildBudgetAlert(admin, c, cats);
-      await sendEmail(c.email, mail.subject, mail.html);
+      await sendEmail(c.email, mail.subject, mail.html, await unsubscribeUrl(c.user_id, kind));
       sent++;
     } catch (e) {
       // Un-claim so the next run tries again.

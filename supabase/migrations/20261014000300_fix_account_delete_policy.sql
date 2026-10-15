@@ -1,7 +1,5 @@
--- The "not the last account" delete policy counted rows in public.accounts
--- from inside a policy on public.accounts, which Postgres rejects as infinite
--- recursion (42P17). Counting through a SECURITY DEFINER function skips RLS
--- for that one count, so there's no loop. It only ever counts the caller's rows.
+-- Counting accounts inside an accounts policy is infinite recursion (42P17);
+-- a SECURITY DEFINER count of the caller's rows skips RLS and avoids the loop.
 
 create or replace function public.my_account_count()
 returns bigint

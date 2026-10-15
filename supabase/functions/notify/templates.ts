@@ -1,9 +1,4 @@
-/**
- * The two notification emails as functions. Same design as emails/*.html
- * (the static previews): 600px, table-based, inline styles, navy header with
- * gold accent, Outlook-safe button, Apple Mail dark mode. Anything that came
- * from a user (names, merchants) is HTML-escaped.
- */
+/** Mirrors the static previews in emails/*.html. All user-supplied text is HTML-escaped. */
 
 const FONT = "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
 const NUM = "'Space Grotesk', 'Helvetica Neue', Arial, sans-serif";

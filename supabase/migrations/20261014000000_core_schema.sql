@@ -1,8 +1,4 @@
--- Monivo core schema: profiles, categories, accounts, transactions, budgets.
---
--- Money is always integer cents (bigint). Every user-owned row has user_id,
--- and row-level security (RLS) means a signed-in user can only ever see or
--- change their own rows, no matter what the app sends.
+-- Money is integer cents (bigint). RLS limits every user to their own rows.
 
 -- ---------------------------------------------------------------------------
 -- Helpers
@@ -20,9 +16,7 @@ end;
 $$;
 
 -- ---------------------------------------------------------------------------
--- Profiles: one row per user, created automatically at sign-up.
--- (The `onboarded` flag stays in auth user_metadata: the router needs it
--- instantly from the session, before any query runs.)
+-- Profiles. `onboarded` stays in auth user_metadata: the router needs it before any query runs.
 -- ---------------------------------------------------------------------------
 
 create table public.profiles (
@@ -39,8 +33,7 @@ create table public.profiles (
 create trigger profiles_touch before update on public.profiles
   for each row execute function public.touch_updated_at();
 
--- Runs as the table owner (security definer) because the new user has no
--- rights yet at the moment auth inserts them.
+-- Security definer: the new user has no rights yet when auth inserts them.
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
@@ -267,8 +260,7 @@ create policy "Own accounts: insert" on public.accounts for insert to authentica
   with check ((select auth.uid()) = user_id);
 create policy "Own accounts: update" on public.accounts for update to authenticated
   using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
--- Every transaction needs an account, so the last one can't be deleted.
--- (Deleting the whole user still cascades: FK cascades don't go through RLS.)
+-- The last account can't be deleted (user deletion still cascades; FK cascades bypass RLS).
 create policy "Own accounts: delete (not the last)" on public.accounts for delete to authenticated
   using (
     (select auth.uid()) = user_id
@@ -295,9 +287,7 @@ create policy "Own transactions: delete" on public.transactions for delete to au
 create policy "Own budget: all" on public.budgets for all to authenticated
   using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
 
--- Two-step enforcement: if the user has a verified authenticator, a session
--- that hasn't entered the code yet (aal1) can't touch any of their data.
--- "Restrictive" policies are ANDed with the ones above.
+-- Restrictive (ANDed with the above): with MFA enabled, an aal1 session can't touch any data.
 do $$
 declare t text;
 begin
@@ -328,7 +318,7 @@ grant execute on function public.month_summary(timestamptz, timestamptz) to auth
 grant execute on function public.set_default_account(uuid) to authenticated;
 
 -- ---------------------------------------------------------------------------
--- Backfill for users who signed up before this migration
+-- Backfill existing users
 -- ---------------------------------------------------------------------------
 
 insert into public.profiles (id, first_name, last_name, currency, notify_push, notify_weekly_recap)

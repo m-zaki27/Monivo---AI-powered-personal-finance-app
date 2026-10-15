@@ -3,9 +3,8 @@ import type { SupabaseClient } from 'npm:@supabase/supabase-js@2';
 import { AiError, generateJson } from '../_shared/gemini.ts';
 
 /**
- * The assistant. The *numbers* are always computed here from the user's own
- * rows (RLS-scoped client); Gemini only writes the sentence and picks which
- * pre-built card to show. So a card can never contain an invented figure.
+ * Numbers are computed here from the user's own rows; Gemini only writes the
+ * sentence and picks a pre-built card, so a card can never show an invented figure.
  */
 
 type Tx = { type: string; amount: number; merchant: string; category_id: string; date: string };
@@ -28,15 +27,19 @@ function topBy(ts: Tx[], key: (t: Tx) => string, n: number): [string, number][] 
   return [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, n);
 }
 
+// Only real ISO timestamps reach the database filters.
+const isoDate = (v: unknown) => (typeof v === 'string' && !Number.isNaN(Date.parse(v)) && /^\d{4}-\d{2}-\d{2}T/.test(v) ? v : null);
+
 export async function answer(sb: SupabaseClient, body: Record<string, unknown>) {
   const question = typeof body.question === 'string' ? body.question.trim().slice(0, 500) : '';
   if (!question) throw new AiError('Ask me something about your money.', 400);
   // The app sends its *local* month boundaries, so "this month" is the user's month.
-  const monthFrom = String(body.monthFrom ?? '');
-  const prevFrom = String(body.prevMonthFrom ?? '');
-  const prevSamePoint = String(body.prevSamePoint ?? '');
-  const now = new Date(String(body.now ?? new Date().toISOString()));
-  const daysInMonth = Number(body.daysInMonth) || 30;
+  const monthFrom = isoDate(body.monthFrom);
+  const prevFrom = isoDate(body.prevMonthFrom);
+  const prevSamePoint = isoDate(body.prevSamePoint);
+  if (!monthFrom || !prevFrom || !prevSamePoint) throw new AiError('Bad request', 400);
+  const now = new Date(isoDate(body.now) ?? new Date().toISOString());
+  const daysInMonth = Math.min(Math.max(Math.trunc(Number(body.daysInMonth)) || 30, 28), 31);
 
   const [txRes, catRes, budgetRes, profileRes] = await Promise.all([
     sb.from('transactions').select('type, amount, merchant, category_id, date').gte('date', prevFrom).order('date'),

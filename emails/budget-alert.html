@@ -2,22 +2,8 @@
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
 <!--
-  Monivo · Budget alert email
-  Sent when monthly spending crosses the user's alert threshold (Settings → Budget alerts).
-
-  Dynamic values (filled in by the backend's templating; sample data shown):
-    firstName ............ Alex
-    monthName ............ October
-    usedPercent .......... 82          (also the progress-bar width below)
-    spent / limit ........ $2,788.40 / $3,400
-    remaining / daysLeft . $611.60 / 12, dailyAllowance $50.97
-    topCategories[3] ..... name, amount, colour
-    links ................ open app, budget settings, unsubscribe
-
-  Email-client notes:
-    - Layout is tables + inline styles: Outlook (Word engine) and Gmail ignore most modern CSS.
-    - Images must use absolute https URLs when sent; the relative path is only for local preview.
-    - The <style> block is progressive enhancement (mobile width, dark mode in Apple Mail).
+  Static preview of the budget alert email (sample data); sent version: supabase/functions/notify/templates.ts.
+  Tables + inline styles because Outlook and Gmail ignore most modern CSS; <style> is progressive enhancement.
 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -55,7 +41,7 @@
 </head>
 <body class="bg-page" style="margin:0; padding:0; background-color:#F3EFE6;">
 
-<!-- Preheader: the grey preview line in the inbox list. Hidden in the email itself. -->
+<!-- Preheader: inbox preview text, hidden in the email. -->
 <div style="display:none; max-height:0; overflow:hidden; mso-hide:all; font-size:1px; line-height:1px; color:#F3EFE6; opacity:0;">
   $611.60 left for the next 12 days. That's about $50.97 a day.&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;
 </div>
@@ -66,7 +52,7 @@
 
       <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" class="container" style="width:600px; max-width:600px;">
 
-        <!-- Header: navy with the gold mark, then a thin gold accent line -->
+        <!-- Header -->
         <tr>
           <td style="background-color:#0E1630; border-radius:24px 24px 0 0; padding:28px 40px;" class="px">
             <table role="presentation" cellpadding="0" cellspacing="0" border="0">
@@ -115,7 +101,7 @@
                   </p>
                   <p class="text-muted" style="margin:2px 0 0 0; font-size:15px; line-height:22px; font-weight:600; color:#6B7390;">of your $3,400 monthly budget</p>
 
-                  <!-- Progress bar: two table cells, widths = used / remaining -->
+                  <!-- Progress bar: two cells sized used / remaining -->
                   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:18px;">
                     <tr>
                       <td width="82%" style="background-color:#FF9F1C; height:10px; line-height:10px; font-size:10px; border-radius:999px 0 0 999px;">&nbsp;</td>
@@ -178,7 +164,7 @@
               </tr>
             </table>
 
-            <!-- CTA: "bulletproof" button. Outlook draws the VML shape; everyone else gets the styled link. -->
+            <!-- Bulletproof CTA: VML for Outlook, styled link elsewhere -->
             <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:32px 0 40px 0;">
               <tr>
                 <td align="center" style="border-radius:999px; background-color:#F5B83D;">

@@ -1,7 +1,5 @@
--- Deleting a user cascades to their accounts. The "promote a new default"
--- trigger then tried to UPDATE sibling accounts that the same cascade was
--- deleting, and Postgres aborted the whole delete ("Database error deleting
--- user"). When the owner is gone there's nothing to promote, so skip it.
+-- On user deletion the promote trigger updated accounts the cascade was deleting,
+-- aborting the delete. Skip promotion when the owner is gone.
 
 create or replace function public.accounts_promote_default()
 returns trigger

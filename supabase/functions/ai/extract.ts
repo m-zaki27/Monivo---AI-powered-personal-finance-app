@@ -42,7 +42,7 @@ export async function scanReceipt(sb: SupabaseClient, body: Record<string, unkno
       'date, and the best matching category. confidence is 0 to 1: lower it when the photo is blurry, cut off or ' +
       'ambiguous. If the image is not a receipt or bill, set isReceipt to false.',
     parts: [
-      { text: `Today is ${String(body.today ?? '')}. Categories: ${cats.map((c) => `${c.id} = ${c.name}`).join('; ')}.` },
+      { text: `Today is ${isDay(body.today) ? body.today : 'unknown'}. Categories: ${cats.map((c) => `${c.id} = ${c.name}`).join('; ')}.` },
       { inlineData: image },
     ],
     schema: {
@@ -86,7 +86,7 @@ export async function parseVoice(sb: SupabaseClient, body: Record<string, unknow
       'everything else is expense. Resolve relative dates like "yesterday" against today. If no amount is ' +
       'mentioned, return an empty items list. Never invent transactions.',
     parts: [
-      { text: `Today is ${String(body.today ?? '')}. Categories: ${cats.map((c) => `${c.id} = ${c.name} (${c.kind})`).join('; ')}.` },
+      { text: `Today is ${isDay(body.today) ? body.today : 'unknown'}. Categories: ${cats.map((c) => `${c.id} = ${c.name} (${c.kind})`).join('; ')}.` },
       { inlineData: audio },
     ],
     schema: {

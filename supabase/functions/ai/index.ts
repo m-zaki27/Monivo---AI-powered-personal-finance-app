@@ -1,16 +1,12 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 import { AiError } from '../_shared/gemini.ts';
-import { corsHeaders, json } from '../_shared/http.ts';
+import { json, withCors } from '../_shared/http.ts';
 
 import { answer } from './assistant.ts';
 import { parseVoice, scanReceipt } from './extract.ts';
 
-/**
- * One endpoint for every AI feature: { action: 'scan' | 'voice' | 'assistant', ... }.
- * Runs as the calling user (their JWT), so row-level security applies to
- * every query, then spends one of their daily allowances before calling Gemini.
- */
+/** Runs with the caller's JWT so RLS applies, and spends a daily allowance before calling Gemini. */
 
 const DAILY_LIMITS = { scan: 20, voice: 30, assistant: 50 } as const;
 type Action = keyof typeof DAILY_LIMITS;
@@ -21,8 +17,7 @@ const limitMessages: Record<Action, string> = {
   assistant: "You've asked 50 questions today, the daily limit. I'll be ready again tomorrow.",
 };
 
-Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+Deno.serve(withCors(async (req) => {
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
 
   const token = (req.headers.get('Authorization') ?? '').replace(/^Bearer\s+/i, '');
@@ -58,4 +53,4 @@ Deno.serve(async (req) => {
     console.error('ai function error', e instanceof Error ? e.message : e);
     return json({ error: 'Something went wrong. Please try again.' }, 500);
   }
-});
+}));

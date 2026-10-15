@@ -1,5 +1,4 @@
--- Per-user daily AI allowance. Gemini's free tier is one shared quota for the
--- whole project, so one busy user mustn't be able to use it all up.
+-- Per-user daily AI allowance, so one user can't exhaust the project's shared Gemini quota.
 
 create table public.ai_usage (
   user_id uuid not null references auth.users (id) on delete cascade,
@@ -17,9 +16,7 @@ create policy "Own AI usage: read" on public.ai_usage for select to authenticate
 revoke all on public.ai_usage from anon;
 grant select on public.ai_usage to authenticated;
 
--- Atomically counts one use and says whether it fits under the daily limit.
--- SECURITY DEFINER because users may read but not write this table directly;
--- it only ever touches the caller's own row.
+-- SECURITY DEFINER: users can't write this table directly; touches only the caller's row.
 create or replace function public.consume_ai_quota(p_kind text, p_limit int)
 returns boolean
 language plpgsql

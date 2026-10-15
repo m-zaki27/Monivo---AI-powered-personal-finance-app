@@ -1,10 +1,5 @@
--- The two-step policies read auth.mfa_factors directly, but signed-in users
--- aren't allowed to read that table, so every query failed with
--- "permission denied for table mfa_factors".
---
--- Fix: a tiny SECURITY DEFINER function (runs with the owner's rights) that
--- answers one yes/no question about the *calling* user only, without exposing
--- the table itself.
+-- Users can't read auth.mfa_factors, so the MFA policies failed. A SECURITY DEFINER
+-- function answers for the calling user only, without exposing the table.
 
 create or replace function public.has_verified_mfa()
 returns boolean

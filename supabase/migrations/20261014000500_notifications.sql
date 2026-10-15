@@ -1,13 +1,9 @@
--- F5: budget-alert and weekly-recap emails, sent by the `notify` Edge Function
--- on a schedule (pg_cron + pg_net).
+-- Budget-alert and weekly-recap emails, sent by the `notify` Edge Function via pg_cron + pg_net.
 
--- Each user's time zone (IANA name, e.g. "Asia/Karachi"), set by the app.
--- "This month" and "Monday morning" are worked out in the user's own time.
+-- IANA time zone set by the app; "this month" and "Monday morning" are local to the user.
 alter table public.profiles add column timezone text not null default 'UTC';
 
--- One row per email sent. The primary key makes sending idempotent: a run
--- "claims" a (user, kind, period) by inserting it, so two overlapping runs can
--- never both send the same alert.
+-- The primary key makes sending idempotent: overlapping runs can't both claim the same email.
 create table public.notification_log (
   user_id uuid not null references auth.users (id) on delete cascade,
   kind text not null check (kind in ('budget_alert', 'weekly_recap')),
@@ -63,8 +59,7 @@ as $$
     );
 $$;
 
--- Users for whom it's Monday, 8:00 or later, in their own time zone, and who
--- haven't had this week's recap. The recap covers the previous Mon–Sun.
+-- Due from Monday 8:00 local time; the recap covers the previous Mon–Sun.
 create or replace function public.weekly_recap_candidates()
 returns table (
   user_id uuid, email text, first_name text, currency text, timezone text,
@@ -105,9 +100,7 @@ grant execute on function public.budget_alert_candidates() to service_role;
 grant execute on function public.weekly_recap_candidates() to service_role;
 
 -- ---------------------------------------------------------------------------
--- Schedule. A random secret is generated *inside* the database and kept in
--- Vault, so it never appears in code or git. Cron sends it; the function
--- checks it with check_cron_secret().
+-- Schedule. The cron secret is generated in-database and kept in Vault, never in code or git.
 -- ---------------------------------------------------------------------------
 
 create extension if not exists pg_cron;
@@ -140,7 +133,6 @@ $$;
 revoke execute on function public.check_cron_secret(text) from anon, authenticated, public;
 grant execute on function public.check_cron_secret(text) to service_role;
 
--- Posts { mode } to the notify function with the cron secret.
 create or replace function public.invoke_notify(p_mode text)
 returns void
 language sql

@@ -1,8 +1,4 @@
-/**
- * Signed one-tap unsubscribe links. The signature (HMAC-SHA256 with a server
- * secret) proves the link was issued by us for this user and email type, so
- * nobody can unsubscribe someone else by editing the URL.
- */
+/** HMAC-signed unsubscribe links, so nobody can unsubscribe someone else by editing the URL. */
 
 export type UnsubscribeKind = 'budget_alert' | 'weekly_recap';
 

@@ -1,14 +1,9 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
-import { corsHeaders, json } from '../_shared/http.ts';
+import { json, withCors } from '../_shared/http.ts';
 
-/**
- * Deletes the calling user. Needs the service-role key (admin rights), which
- * is why this runs here and never in the app. Supabase injects SUPABASE_URL
- * and SUPABASE_SERVICE_ROLE_KEY into every Edge Function automatically.
- */
-Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+/** Deleting a user needs the service-role key, so it runs here and never in the app. */
+Deno.serve(withCors(async (req) => {
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
 
   const token = (req.headers.get('Authorization') ?? '').replace(/^Bearer\s+/i, '');
@@ -28,9 +23,13 @@ Deno.serve(async (req) => {
   const hasMfa = factors?.factors.some((f) => f.factor_type === 'totp' && f.status === 'verified');
   if (hasMfa && data.claims.aal !== 'aal2') return json({ error: 'Verify two-step first.' }, 403);
 
-  // Tables added in F1 reference auth.users with ON DELETE CASCADE, so their rows go too.
+  // Profile photos aren't rows, so they don't cascade: remove them first.
+  const { data: photos } = await admin.storage.from('avatars').list(userId);
+  if (photos?.length) await admin.storage.from('avatars').remove(photos.map((f) => `${userId}/${f.name}`));
+
+  // App tables reference auth.users with ON DELETE CASCADE, so their rows go too.
   const { error: deleteError } = await admin.auth.admin.deleteUser(userId);
   if (deleteError) return json({ error: "Couldn't delete the account." }, 500);
 
   return json({ ok: true });
-});
+}));
