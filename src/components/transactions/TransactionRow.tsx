@@ -10,16 +10,12 @@ interface TransactionRowProps {
   category?: Category;
   accountName?: string;
   currency: string;
-  /** Show "Oct 6" instead of the time (when rows aren't grouped by day) */
+  /** Show the date instead of the time (for ungrouped lists) */
   showDate?: boolean;
   onPress?: (t: Transaction) => void;
 }
 
-/**
- * One transaction: badge, merchant, "Category · Account", signed amount.
- * The parent resolves category/account names, so this row stays a pure
- * display component that's cheap to memo in long lists.
- */
+/** Parent resolves names so the row stays pure and cheap to memo. */
 export const TransactionRow = memo(function TransactionRow({
   transaction: t,
   category,
@@ -51,8 +47,7 @@ export const TransactionRow = memo(function TransactionRow({
         </Text>
       </View>
       <View className="items-end gap-0.5">
-        {/* Expenses get "−" in the normal text colour; only income is tinted, so a
-            list of spending doesn't turn into a wall of red. */}
+        {/* Only income is tinted, so spending lists aren't a wall of red. */}
         <Money cents={isIncome ? t.amount : -t.amount} signed currency={currency} variant="moneySm" tone={isIncome ? 'income' : 'default'} />
         <Text variant="caption" tone="muted">
           {when}

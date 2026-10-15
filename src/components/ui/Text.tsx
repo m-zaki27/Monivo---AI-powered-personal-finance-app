@@ -56,7 +56,6 @@ export interface TextProps extends RNTextProps {
 
 const isNumeric = (v: Scale) => v.startsWith('money') || v.startsWith('balance');
 
-/** All app text goes through this — it picks the font file, size and colour. */
 export function Text({ variant = 'body', tone = 'default', weight, center, className, style, ...rest }: TextProps) {
   const [fontSize, lineHeight, letterSpacing] = typeScale[variant];
   const scaleStyle: TextStyle = {

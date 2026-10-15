@@ -2,11 +2,6 @@ import { z } from 'zod';
 
 import { categoryColors } from '@/theme/tokens';
 
-/**
- * Domain models. Defining them as Zod schemas means the real API's responses
- * can later be validated with `.parse()` — and the TS types come for free.
- */
-
 const cents = z.number().int();
 const colorKey = z.enum(Object.keys(categoryColors) as [keyof typeof categoryColors, ...(keyof typeof categoryColors)[]]);
 
@@ -47,7 +42,7 @@ export const accountSchema = z.object({
   type: accountTypeSchema,
   institution: z.string().optional(),
   last4: z.string().length(4).optional(),
-  /** Balance before the first transaction we know about */
+  /** Balance before the first recorded transaction */
   openingBalance: cents,
   color: colorKey,
   isDefault: z.boolean(),
@@ -55,7 +50,6 @@ export const accountSchema = z.object({
 });
 export type Account = z.infer<typeof accountSchema>;
 
-/** What the API returns for lists: stored fields + derived ones. */
 export type AccountWithBalance = Account & { balance: number; transactionCount: number };
 
 export const transactionSourceSchema = z.enum(['manual', 'scan', 'voice']);
@@ -77,7 +71,7 @@ export type Transaction = z.infer<typeof transactionSchema>;
 
 export const budgetSchema = z.object({
   monthlyLimit: cents.positive(),
-  /** 0–1, e.g. 0.8 = warn at 80% */
+  /** e.g. 0.8 = warn at 80% */
   alertThreshold: z.number().min(0.5).max(1),
   emailAlerts: z.boolean(),
 });
@@ -90,6 +84,8 @@ export const userSchema = z.object({
   email: z.email(),
   currency: z.string().length(3),
   mfaEnabled: z.boolean(),
+  /** null shows initials */
+  avatarUrl: z.string().nullable(),
   notifications: z.object({
     push: z.boolean(),
     weeklyRecap: z.boolean(),

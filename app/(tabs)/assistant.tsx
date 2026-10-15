@@ -11,11 +11,7 @@ import { starterPrompts } from '@/services/assistant';
 let messageId = 0;
 const nextId = () => `m${++messageId}`;
 
-/**
- * The conversation lives in this screen's state: tabs stay mounted, so it
- * survives switching tabs, and "New chat" clears it. Each question is a
- * mutation; its pending state drives the typing indicator.
- */
+/** Chat lives in screen state: tabs stay mounted, so it survives tab switches. */
 export default function AssistantScreen() {
   const insets = useSafeAreaInsets();
   const keyboardUp = useKeyboardVisible();

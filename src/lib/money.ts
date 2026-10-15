@@ -1,7 +1,4 @@
-/**
- * Money is ALWAYS an integer number of cents. Floats like 0.1 + 0.2 drift,
- * integers don't — so we only convert to a decimal at the display edge.
- */
+/** Integer minor units, to avoid float drift; convert only for display. */
 export type Cents = number;
 
 export const DEFAULT_CURRENCY = 'USD';
@@ -30,11 +27,10 @@ export interface FormatMoneyOptions {
   signed?: boolean;
   /** Drop the ".00" when the value is whole */
   hideZeroCents?: boolean;
-  /** $12.4K style — for chart axes */
+  /** $12.4K style */
   compact?: boolean;
 }
 
-/** The one shared money formatter. */
 export function formatMoney(cents: Cents, opts: FormatMoneyOptions = {}): string {
   const { currency = DEFAULT_CURRENCY, signed = false, hideZeroCents = false, compact = false } = opts;
   const abs = Math.abs(Math.round(cents));
@@ -45,7 +41,14 @@ export function formatMoney(cents: Cents, opts: FormatMoneyOptions = {}): string
   return body;
 }
 
-/** Splits into whole/fraction parts so big balance displays can style them separately. */
+const compactFmt = new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 });
+
+/** 1500 → "1.5K" (no currency). */
+export function formatCompactNumber(value: number): string {
+  return compactFmt.format(value);
+}
+
+/** Splits a formatted amount into whole and fraction parts for separate styling. */
 export function splitMoney(cents: Cents, currency = DEFAULT_CURRENCY) {
   const formatted = formatMoney(cents, { currency });
   const match = formatted.match(/^(.*?)([.,]\d{2})?$/);
@@ -61,15 +64,12 @@ export function parseToCents(input: string): Cents | null {
   return Number.isFinite(cents) ? cents : null;
 }
 
-/** 1250 → "12.50" (for prefilling inputs) */
+/** 1250 → "12.50" */
 export function centsToInput(cents: Cents): string {
   return (cents / 100).toFixed(2);
 }
 
-/**
- * Applies a keypad press to a typed amount string ("12.5").
- * Keeps at most 2 decimals and a sane max length.
- */
+/** Applies a keypad press to an amount string (max 2 decimals, `maxDigits` whole digits). */
 export function applyKeypadKey(current: string, key: string, maxDigits = 9): string {
   if (key === 'backspace') return current.slice(0, -1);
   if (key === '.') {
@@ -87,10 +87,7 @@ export function sumCents(values: Cents[]): Cents {
   return values.reduce((a, b) => a + b, 0);
 }
 
-/**
- * Cleans free typing in an amount field: digits and one dot, max 2 decimals.
- * "1,2.345" → "12.34". (The keypad has applyKeypadKey; this is for TextInput.)
- */
+/** Sanitizes TextInput amounts: "1,2.345" → "12.34". */
 export function sanitizeAmountInput(text: string, maxDigits = 9): string {
   const cleaned = text.replace(/[^0-9.]/g, '');
   const [whole = '', ...rest] = cleaned.split('.');

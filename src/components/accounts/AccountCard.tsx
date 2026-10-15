@@ -29,11 +29,7 @@ interface AccountCardProps {
 
 const ON_CARD_MUTED = 'rgba(255,255,255,0.72)';
 
-/**
- * Tinted gradient card, like a physical card: the account colour fading into
- * deep navy. Always dark with light text, in both themes, so every colour
- * stays readable. Also used as the live preview on the add/edit form.
- */
+/** Account-coloured gradient card, always dark in both themes. Also the live preview on the form. */
 export function AccountCard({ account: a, currency, onPress }: AccountCardProps) {
   const tint = categoryColors[a.color];
   const Icon = accountTypeIcons[a.type];

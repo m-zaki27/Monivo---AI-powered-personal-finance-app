@@ -12,10 +12,9 @@ export const accountFormSchema = z
     name: z.string().trim().min(1, 'Give this account a name').max(30, 'Keep it under 30 characters'),
     type: accountTypeSchema,
     institution: z.string().trim().max(40, 'Keep it under 40 characters'),
-    // Optional, but if it's there it must be exactly 4 digits.
     last4: z.string().trim().refine((v) => v === '' || /^\d{4}$/.test(v), 'Use the last 4 digits only'),
     color: z.enum(colorKeys),
-    /** Typed amount; only used when creating. For credit cards it's the amount owed. */
+    /** Create only; for credit cards, the amount owed. */
     startingBalance: z.string(),
     isDefault: z.boolean(),
   })

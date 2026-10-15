@@ -23,7 +23,7 @@ export default function LogInScreen() {
       const result = await logIn.mutateAsync(values);
       if (result.status === 'mfa_required') router.push('/mfa');
       else if (result.status === 'unconfirmed') router.push({ pathname: '/verify', params: { email: values.email, purpose: 'signup' } });
-      // 'ok': nothing to do here. Supabase stored the session, and the route guard shows the app.
+      // 'ok': the session is stored and the route guard shows the app.
     } catch (e) {
       applyApiError(e, setError, []);
     }

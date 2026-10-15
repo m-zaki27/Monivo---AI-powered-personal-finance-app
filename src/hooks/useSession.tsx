@@ -1,26 +1,47 @@
-import type { Session, User } from '@supabase/supabase-js';
+import { isAuthRetryableFetchError, type Session, type User } from '@supabase/supabase-js';
 import { useQueryClient } from '@tanstack/react-query';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
-import { supabase } from '@/lib/supabase';
+import { secureStorage } from '@/lib/secureStorage';
+import { authStorageKey, supabase } from '@/lib/supabase';
 import { authApi } from '@/services';
 
-/**
- * - signedOut: no session
- * - mfaRequired: password accepted, authenticator code still needed
- * - recovering: signed in by a password-reset code, must set a new password first
- * - signedIn: fully in
- */
+import { queryPersister } from './queryClient';
+
+// Offline with an expired token, getSession() reports no session; fall back to the
+// stored one so the app opens with cached data and Supabase refreshes once online.
+async function loadSavedSession(): Promise<Session | null> {
+  const { data, error } = await supabase.auth.getSession();
+  if (data.session || !error || !isAuthRetryableFetchError(error)) return data.session;
+  const saved = await secureStorage.getItem(authStorageKey).catch(() => null);
+  if (!saved) return null;
+  const session = JSON.parse(saved) as Session;
+  // Don't bypass an unfinished MFA challenge offline.
+  const hasTwoStep = session.user.factors?.some((f) => f.status === 'verified');
+  return hasTwoStep && tokenAal(session.access_token) !== 'aal2' ? null : session;
+}
+
+/** Reads the JWT `aal` claim (aal2 = MFA completed). */
+function tokenAal(jwt: string): string | undefined {
+  try {
+    // base64url → padded base64 for atob
+    const b64 = jwt.split('.')[1]!.replace(/-/g, '+').replace(/_/g, '/');
+    return JSON.parse(atob(b64.padEnd(b64.length + ((4 - (b64.length % 4)) % 4), '='))).aal;
+  } catch {
+    return undefined;
+  }
+}
+
+/** `recovering`: signed in via password-reset code, must set a new password first. */
 export type SessionStatus = 'signedOut' | 'mfaRequired' | 'recovering' | 'signedIn';
 
 interface SessionContextValue {
   status: SessionStatus;
   user: User | null;
-  /** Finished onboarding (stored on the Supabase user until F1 adds a profiles table). */
+  /** Stored in Supabase user metadata. */
   onboarded: boolean;
-  /** False until the saved session has been read from storage. */
   isHydrated: boolean;
-  /** Re-checks whether a second factor is still needed (after a code is verified). */
+  /** Re-checks whether MFA is still needed (call after verifying a code). */
   refresh: () => Promise<void>;
   setRecovering: (value: boolean) => void;
   completeOnboarding: () => Promise<void>;
@@ -29,11 +50,7 @@ interface SessionContextValue {
 
 const SessionContext = createContext<SessionContextValue | null>(null);
 
-/**
- * Supabase owns the session (it saves, restores and refreshes tokens). This
- * provider just listens and derives one `status` the route guards read: when
- * Supabase signs someone in or out, the guards move them to the right screens.
- */
+/** Derives a single auth `status` for the route guards from Supabase's session. */
 export function SessionProvider({ children }: { children: ReactNode }) {
   const qc = useQueryClient();
   const [session, setSession] = useState<Session | null>(null);
@@ -47,18 +64,22 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    supabase.auth
-      .getSession()
-      .then(({ data }) => evaluate(data.session))
+    loadSavedSession()
+      .then(evaluate)
       .finally(() => setIsHydrated(true));
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, next) => {
-      // Supabase warns against awaiting its own methods inside this callback
-      // (it can deadlock), so the follow-up check runs on the next tick.
+    const { data: sub } = supabase.auth.onAuthStateChange((event, next) => {
+      // Handled by loadSavedSession; this event would undo the offline fallback.
+      if (event === 'INITIAL_SESSION') return;
+      if (event === 'SIGNED_OUT') {
+        qc.clear();
+        void queryPersister.removeClient();
+      }
+      // Awaiting Supabase calls inside this callback can deadlock; defer to the next tick.
       setTimeout(() => void evaluate(next), 0);
     });
     return () => sub.subscription.unsubscribe();
-  }, [evaluate]);
+  }, [evaluate, qc]);
 
   const refresh = useCallback(async () => {
     const { data } = await supabase.auth.getSession();
@@ -66,15 +87,15 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, [evaluate]);
 
   const completeOnboarding = useCallback(async () => {
-    // USER_UPDATED fires afterwards, the session updates, and the guard swaps in the tabs.
+    // The resulting USER_UPDATED event refreshes the session and the guard redirects.
     await supabase.auth.updateUser({ data: { onboarded: true } });
   }, []);
 
   const signOut = useCallback(async () => {
     setRecovering(false);
     await authApi.logOut().catch(() => {});
-    // Drop every cached query so the next user never sees this one's data.
     qc.clear();
+    await queryPersister.removeClient();
   }, [qc]);
 
   const status: SessionStatus = !session ? 'signedOut' : recovering ? 'recovering' : mfaPending ? 'mfaRequired' : 'signedIn';

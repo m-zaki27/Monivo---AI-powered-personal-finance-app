@@ -75,7 +75,7 @@ export default function TransactionsScreen() {
         <TransactionRowSkeleton key={i} />
       ))}
     </View>
-  ) : list.isError ? (
+  ) : list.isError && !list.data ? (
     <ErrorState error={list.error} onRetry={() => list.refetch()} />
   ) : hasFilters ? (
     <EmptyState

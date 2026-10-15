@@ -27,10 +27,7 @@ interface DialogProps {
   loading?: boolean;
 }
 
-/**
- * Centred confirm dialog for decisions (delete, discard). Tapping the scrim
- * cancels; the destructive button is never the default-looking gold one.
- */
+/** Centred confirm dialog; tapping the scrim cancels. */
 export function Dialog({
   visible,
   title,

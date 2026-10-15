@@ -1,10 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
-/**
- * Seconds left until a deadline. We store the end *time*, not a counter we
- * decrement: timers pause while the app is backgrounded, but Date.now() doesn't,
- * so the countdown stays correct when the user comes back from their inbox.
- */
+// Tracks an end timestamp, not a decrementing counter, since timers pause in the background.
 export function useCountdown(seconds: number) {
   const [endsAt, setEndsAt] = useState(() => Date.now() + seconds * 1000);
   const [now, setNow] = useState(() => Date.now());

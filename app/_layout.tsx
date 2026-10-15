@@ -9,7 +9,7 @@ import {
   PlusJakartaSans_800ExtraBold,
 } from '@expo-google-fonts/plus-jakarta-sans';
 import { SpaceGrotesk_500Medium, SpaceGrotesk_700Bold } from '@expo-google-fonts/space-grotesk';
-import { QueryClientProvider } from '@tanstack/react-query';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -19,17 +19,16 @@ import { LogBox } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { OfflineBanner } from '@/components/OfflineBanner';
 import { SetupNeeded } from '@/components/SetupNeeded';
 import { ToastProvider } from '@/components/ui';
-import { queryClient } from '@/hooks/queryClient';
+import { persistOptions, queryClient } from '@/hooks/queryClient';
 import { SessionProvider, useSession } from '@/hooks/useSession';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import { ThemeProvider, useTheme } from '@/theme';
 
-// Dev-only React Native warning on Android: a touch that *started* outside the
-// JS responder system (e.g. Expo Go's floating Tools button or a native gesture)
-// and *ended* on the app. Harmless, and LogBox doesn't exist in release builds.
-LogBox.ignoreLogs(['Cannot record touch end without a touch start']);
+// Harmless dev-only Android warning when a touch starts outside JS (e.g. Expo Go's Tools button).
+LogBox.ignoreLogs(['Cannot record touch end without a touch start', 'Ended a touch event which was not counted in `trackedTouchCount`']);
 
 // Keep the native splash up until fonts are ready — avoids a flash of system font.
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -46,13 +45,11 @@ export default function RootLayout() {
   });
   if (!fontsLoaded && !fontError) return null;
 
-  // Provider order: gestures + safe areas are native-level, then data (and the
-  // session, which clears data on sign-out), then theme, then toasts (which
-  // need theme + safe areas to render).
+  // Order matters: session clears query data on sign-out; toasts need theme + safe areas.
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <QueryClientProvider client={queryClient}>
+        <PersistQueryClientProvider client={queryClient} persistOptions={persistOptions}>
           <SessionProvider>
             <ThemeProvider>
               <ToastProvider>
@@ -60,7 +57,7 @@ export default function RootLayout() {
               </ToastProvider>
             </ThemeProvider>
           </SessionProvider>
-        </QueryClientProvider>
+        </PersistQueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
@@ -72,8 +69,7 @@ function RootStack() {
   // Two-step-pending and mid-password-reset users stay in the auth group until they finish.
   const signedIn = status === 'signedIn';
 
-  // Keep the splash up until we know which group to show — no flash of Welcome
-  // for someone who is already signed in.
+  // Keep the splash until the session is known, so signed-in users never see Welcome flash.
   useEffect(() => {
     if (isHydrated) SplashScreen.hideAsync().catch(() => {});
   }, [isHydrated]);
@@ -81,12 +77,8 @@ function RootStack() {
   if (!isHydrated) return null;
   if (!isSupabaseConfigured) return <SetupNeeded />;
 
-  /*
-   * Route guards. Exactly one group is reachable at a time; when the session
-   * changes, the router drops the now-forbidden screens from history and shows
-   * the first allowed screen. So screens never navigate "to the dashboard"
-   * after login — they update the session and the guards do the rest.
-   */
+  // Route guards: one group reachable at a time. Screens update the session
+  // instead of navigating; the router then shows the first allowed screen.
   return (
     <>
       <StatusBar style={isDark ? 'light' : 'dark'} />
@@ -108,9 +100,8 @@ function RootStack() {
         <Stack.Protected guard={!signedIn}>
           <Stack.Screen name="(auth)" options={{ animation: 'fade' }} />
         </Stack.Protected>
-        {/* Dev gallery stays reachable in every state. */}
-        <Stack.Screen name="dev" />
       </Stack>
+      <OfflineBanner />
     </>
   );
 }

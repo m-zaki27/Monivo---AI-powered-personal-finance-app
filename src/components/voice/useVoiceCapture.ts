@@ -12,22 +12,17 @@ import { Platform } from 'react-native';
 import { sampleUtterances, type VoiceInput } from '@/services/ai';
 
 export type CapturePhase = 'idle' | 'listening' | 'stopped';
-/** real = your recorded voice goes to the AI; demo = a sample sentence, no microphone needed */
+/** demo = sample sentence, no microphone needed */
 export type CaptureMode = 'real' | 'demo';
 
 const WORD_MS = 230;
-/** Long notes cost more and rarely help; stop automatically after a minute. */
+/** Long notes cost more and rarely help. */
 const MAX_SECONDS = 60;
 
-/** dB from the recorder (-160 silent … 0 loudest) → 0–1. Speech sits around -45…-10. */
+/** Recorder dB (-160…0) → 0–1; speech sits around -45…-10. */
 const normalizeDb = (db: number) => Math.min(1, Math.max(0, (db + 55) / 45));
 
-/**
- * Records a voice note and hands it to `onFinish` when you stop. With a
- * microphone it records for real (the waveform follows your voice); without
- * one (web, simulator, permission off) it plays a sample sentence word by
- * word so the flow can still be tried.
- */
+/** Without a mic (web, simulator, no permission) it plays a sample sentence instead. */
 export function useVoiceCapture(onFinish: (input: VoiceInput) => void) {
   const recorder = useAudioRecorder({ ...RecordingPresets.HIGH_QUALITY, isMeteringEnabled: true });
   const recorderState = useAudioRecorderState(recorder, 100);
@@ -41,7 +36,6 @@ export function useVoiceCapture(onFinish: (input: VoiceInput) => void) {
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const transcriptRef = useRef('');
   const modeRef = useRef<CaptureMode>('real');
-  // Always call the latest onFinish without restarting anything.
   const onFinishRef = useRef(onFinish);
   useEffect(() => {
     onFinishRef.current = onFinish;
@@ -53,7 +47,7 @@ export function useVoiceCapture(onFinish: (input: VoiceInput) => void) {
     timers.current = [];
   };
 
-  /** Stops the recorder and returns the recording as base64 (null if nothing was recorded). */
+  /** Returns base64, or null if nothing was recorded. */
   const stopMic = useCallback(async (): Promise<string | null> => {
     if (!recording.current) return null;
     recording.current = false;
@@ -75,7 +69,7 @@ export function useVoiceCapture(onFinish: (input: VoiceInput) => void) {
       return;
     }
     const base64 = await stopMic();
-    // Both platforms record AAC in an .m4a file with this preset.
+    // AAC in .m4a on both platforms.
     if (base64) onFinishRef.current({ kind: 'audio', base64, mimeType: 'audio/m4a' });
     else setPhase('idle');
   }, [stopMic]);
@@ -104,7 +98,7 @@ export function useVoiceCapture(onFinish: (input: VoiceInput) => void) {
     setTranscript('');
     setPhase('listening');
 
-    // Web recordings aren't a format the AI accepts, so the browser uses the demo.
+    // The AI doesn't accept web recording formats, so the browser uses the demo.
     if (Platform.OS === 'web') return startDemo();
     try {
       const permission = await AudioModule.requestRecordingPermissionsAsync();
@@ -129,7 +123,6 @@ export function useVoiceCapture(onFinish: (input: VoiceInput) => void) {
     setPhase('idle');
   }, []);
 
-  // Leaving the screen mid-recording must release the mic.
   useEffect(
     () => () => {
       clearTimers();

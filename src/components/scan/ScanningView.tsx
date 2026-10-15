@@ -14,7 +14,6 @@ import { SampleReceipt } from './SampleReceipt';
 const STEPS = ['Finding the total…', 'Reading the merchant…', 'Checking the date…', 'Picking a category…'];
 const HEIGHT = 360;
 
-/** The photo with a glowing line sweeping over it while the "AI" works. */
 export function ScanningView({ photo }: { photo: string | null }) {
   const { colors } = useTheme();
   const reduceMotion = useReducedMotion();
@@ -34,7 +33,6 @@ export function ScanningView({ photo }: { photo: string | null }) {
       <View className="w-full overflow-hidden rounded-card border border-line" style={{ height: HEIGHT }}>
         {photo && photo !== 'sample' ? <Image source={{ uri: photo }} className="flex-1" resizeMode="cover" /> : <SampleReceipt />}
         <View className="absolute inset-0" style={{ backgroundColor: 'rgba(11,16,32,0.25)' }} />
-        {/* The scan line: a soft cobalt glow with a bright core. */}
         <AnimatedView className="absolute inset-x-0 top-0 h-12" style={lineStyle}>
           <LinearGradient colors={['transparent', withAlpha(colors.secondary, 0.45), 'transparent']} style={{ flex: 1 }} />
           <View className="absolute inset-x-0 top-6 h-0.5" style={{ backgroundColor: colors.income, boxShadow: `0px 0px 12px ${colors.income}` }} />

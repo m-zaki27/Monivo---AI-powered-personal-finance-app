@@ -16,10 +16,7 @@ interface TransactionFilterBarProps {
   accounts: AccountWithBalance[];
 }
 
-/**
- * Search + chips. Type (income/expense) and account combine, e.g. "Expense"
- * + "Rewards Card". "All" clears both.
- */
+/** Type and account filters combine; "All" clears both. */
 export function TransactionFilterBar({ value, onChange, accounts }: TransactionFilterBarProps) {
   const set = (patch: Partial<TransactionFilterState>) => onChange({ ...value, ...patch });
   const toggleType = (t: TransactionType) => set({ type: value.type === t ? undefined : t });

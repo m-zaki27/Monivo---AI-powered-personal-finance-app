@@ -16,7 +16,7 @@ interface CalendarSheetProps {
   onSelect: (d: Date) => void;
 }
 
-/** Month grid in a sheet. Future days are disabled: you can't have spent money tomorrow yet. */
+/** Month grid in a sheet; future days are disabled. */
 export function CalendarSheet({ visible, onClose, value, onSelect }: CalendarSheetProps) {
   const today = startOfDay(new Date());
   const [month, setMonth] = useState(() => startOfMonth(value));

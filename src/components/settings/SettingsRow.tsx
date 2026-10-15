@@ -8,20 +8,15 @@ import { useTheme } from '@/theme';
 
 interface SettingsRowProps {
   icon: LucideIcon;
-  /** Icon tint; defaults to cobalt */
   color?: string;
   label: string;
-  /** Second line, e.g. "Get an email every Monday" */
   description?: string;
-  /** Short value on the right, e.g. "USD" */
   value?: string;
   onPress?: () => void;
-  /** Renders a switch instead of a chevron */
   toggle?: { value: boolean; onChange: (v: boolean) => void; disabled?: boolean };
   destructive?: boolean;
 }
 
-/** One row: tinted icon badge, label (+ description), then a value + chevron or a switch. */
 export function SettingsRow({ icon: Icon, color, label, description, value, onPress, toggle, destructive }: SettingsRowProps) {
   const { colors } = useTheme();
   const tint = destructive ? colors.expense : (color ?? colors.secondary);
@@ -55,8 +50,7 @@ export function SettingsRow({ icon: Icon, color, label, description, value, onPr
   );
 
   const className = 'min-h-[60px] flex-row items-center gap-3 px-4 py-3';
-  // Toggle rows aren't pressable as a whole: the switch is the control, which
-  // avoids two touch targets fighting over one gesture.
+  // Only the switch is pressable, so two touch targets don't fight over one gesture.
   if (onPress && !toggle) {
     return (
       <PressableScale onPress={onPress} scaleTo={0.98} accessibilityLabel={label} accessibilityHint={description} className={className}>
@@ -67,7 +61,6 @@ export function SettingsRow({ icon: Icon, color, label, description, value, onPr
   return <View className={className}>{content}</View>;
 }
 
-/** Overline title + a card of rows separated by hairlines. */
 export function SettingsSection({ title, children }: { title: string; children: ReactNode }) {
   const rows = Children.toArray(children).filter(Boolean);
   return (

@@ -9,10 +9,9 @@ const BARS = 29;
 const MIN = 6;
 const MAX = 72;
 
-/** Taller in the middle, shorter at the edges, so it reads as a voice, not a bar chart. */
 const envelope = (i: number) => 0.35 + 0.65 * Math.sin((Math.PI * (i + 0.5)) / BARS);
 
-/** Bars that follow the input level (0–1). Each bar adds its own jitter so it never looks mechanical. */
+/** `level` is 0–1. */
 export function Waveform({ level }: { level: number }) {
   return (
     <View className="h-20 flex-row items-center justify-center gap-1" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
@@ -33,7 +32,6 @@ function Bar({ index, level }: { index: number; level: number }) {
   }, [level, index, h]);
 
   const style = useAnimatedStyle(() => ({ height: h.value }));
-  // Gradient-ish: cobalt at the edges, sky in the middle.
   const color = Math.abs(index - BARS / 2) < BARS / 5 ? colors.income : colors.secondary;
   return <AnimatedView className="w-1.5 rounded-full" style={[{ backgroundColor: color }, style]} />;
 }

@@ -16,11 +16,7 @@ export interface PressableScaleProps extends Omit<PressableProps, 'style' | 'chi
   haptic?: keyof typeof haptics | false;
 }
 
-/**
- * The shared "press feel": a quick spring scale-down, plus a light haptic.
- * The animation runs on the UI thread (Reanimated), so it stays smooth even
- * if JS is busy.
- */
+/** Shared press feel: spring scale-down on the UI thread plus a light haptic. */
 export function PressableScale({
   children,
   className,

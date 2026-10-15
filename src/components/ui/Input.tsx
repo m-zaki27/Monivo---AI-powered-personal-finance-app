@@ -18,11 +18,7 @@ export interface InputProps extends TextInputProps {
   containerClassName?: string;
 }
 
-/**
- * Plain controlled input. Works with React Hook Form via <Controller>
- * (value / onChangeText / onBlur). If `secureTextEntry` is set, an eye
- * toggle appears automatically.
- */
+/** Controlled input; `secureTextEntry` adds an eye toggle automatically. */
 export function Input({
   ref,
   label,

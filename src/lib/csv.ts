@@ -1,13 +1,9 @@
 import type { Account, Category, Transaction } from '@/schemas/models';
 
-/**
- * Quotes a cell only when it needs it (comma, quote or newline), doubling any
- * quotes inside. A leading = + - @ is prefixed with ' so spreadsheet apps
- * don't run a merchant name like "=HYPERLINK(...)" as a formula.
- */
-function cell(value: string | number): string {
+// Prefixes formula-like text with ' to block CSV injection (plain numbers are left alone).
+export function cell(value: string | number): string {
   let s = String(value);
-  if (/^[=+\-@]/.test(s)) s = `'${s}`;
+  if (/^[=+\-@]/.test(s) && !/^-?\d+(\.\d+)?$/.test(s)) s = `'${s}`;
   return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 
@@ -29,7 +25,7 @@ export function transactionsToCsv(
     categories.get(t.categoryId)?.name ?? '',
     accounts.get(t.accountId)?.name ?? '',
     t.type,
-    // Cents → a plain decimal (no currency symbol) so spreadsheets can sum it.
+    // No currency symbol, so spreadsheets can sum it.
     ((t.type === 'income' ? t.amount : -t.amount) / 100).toFixed(2),
     t.note ?? '',
   ]);

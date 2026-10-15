@@ -15,7 +15,7 @@ interface IconButtonProps extends Omit<PressableScaleProps, 'children'> {
 }
 
 const variantClass = {
-  surface: 'bg-surface border border-line',
+  surface: 'bg-glass border border-glass-line',
   ghost: 'bg-transparent',
   gold: 'bg-gold',
 };

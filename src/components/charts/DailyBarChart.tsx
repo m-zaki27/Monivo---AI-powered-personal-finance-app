@@ -4,7 +4,7 @@ import { BarChart } from 'react-native-gifted-charts';
 
 import { Money, Text } from '@/components/ui';
 import { haptics } from '@/lib/haptics';
-import { formatMoney } from '@/lib/money';
+import { formatCompactNumber } from '@/lib/money';
 import { useTheme } from '@/theme';
 import { fonts } from '@/theme/tokens';
 
@@ -39,20 +39,14 @@ function lastActiveDay(days: DayTotals[]): number {
   return days.length - 1;
 }
 
-/**
- * Grouped bars: each day is an income bar (sky) next to an expense bar (rose).
- * gifted-charts has no "group" concept; a group is just two bars where the
- * first has a tiny `spacing` and the second a bigger one. Values are in whole
- * currency units so the axis labels stay readable.
- */
+/** Grouped income/expense bars; gifted-charts has no groups, so pairs are faked via per-bar `spacing`. */
 export function DailyBarChart({ days, monthLabel, currency }: DailyBarChartProps) {
   const { colors } = useTheme();
   const [width, setWidth] = useState(0);
   const [selected, setSelected] = useState(() => lastActiveDay(days));
   const active = days[selected];
   const chartWidth = width - Y_LABEL_WIDTH - 8;
-  // Early in the month there are only a few days: widen the gaps so the bars
-  // fill the card. Later on, the minimum gap wins and the chart scrolls.
+  // Widen gaps early in the month so bars fill the card; later the minimum gap wins and it scrolls.
   const dayGap = Math.max(MIN_DAY_GAP, (chartWidth - EDGE * 2 - days.length * (BAR * 2 + PAIR_GAP)) / Math.max(days.length, 1));
   const maxValue = useMemo(() => niceMax(Math.max(...days.map((d) => Math.max(d.income, d.expense) / 100))), [days]);
 
@@ -78,19 +72,20 @@ export function DailyBarChart({ days, monthLabel, currency }: DailyBarChartProps
 
   return (
     <View className="gap-4">
-      <View className="flex-row items-end justify-between">
-        <View>
+      {/* Amounts on their own row so long currencies don't push the legend off the card. */}
+      <View className="gap-1">
+        <View className="flex-row items-center justify-between">
           <Text variant="caption" tone="muted">
             {active ? `${monthLabel} ${active.day}` : monthLabel}
           </Text>
-          <View className="flex-row items-baseline gap-3">
-            <Money cents={active?.income ?? 0} signed currency={currency} variant="moneySm" tone="income" />
-            <Money cents={-(active?.expense ?? 0)} signed currency={currency} variant="moneySm" tone="expense" />
+          <View className="flex-row gap-3">
+            <Legend color={colors.income} label="In" />
+            <Legend color={colors.expense} label="Out" />
           </View>
         </View>
-        <View className="flex-row gap-3">
-          <Legend color={colors.income} label="In" />
-          <Legend color={colors.expense} label="Out" />
+        <View className="flex-row flex-wrap items-baseline gap-x-3">
+          <Money cents={active?.income ?? 0} signed currency={currency} variant="moneySm" tone="income" />
+          <Money cents={-(active?.expense ?? 0)} signed currency={currency} variant="moneySm" tone="expense" />
         </View>
       </View>
 
@@ -114,8 +109,8 @@ export function DailyBarChart({ days, monthLabel, currency }: DailyBarChartProps
             xAxisColor={colors.border}
             rulesColor={colors.border}
             yAxisTextStyle={{ color: colors.muted, fontSize: 10, fontFamily: fonts.numMedium }}
-            formatYLabel={(l) => formatMoney(Number(l) * 100, { currency, compact: true })}
-            // Long months scroll horizontally; start at today.
+            // No currency code: "PKR 300K" is wider than the axis and gets clipped.
+            formatYLabel={(l) => formatCompactNumber(Number(l))}
             scrollToEnd
             showScrollIndicator={false}
             onPress={(_item: unknown, index: number) => {

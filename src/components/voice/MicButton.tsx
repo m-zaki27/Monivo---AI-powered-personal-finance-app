@@ -23,7 +23,6 @@ interface MicButtonProps {
   disabled?: boolean;
 }
 
-/** Big gold mic. While listening, a soft ring pulses outward and the icon becomes "stop". */
 export function MicButton({ listening, onPress, disabled }: MicButtonProps) {
   const { gradients, colors } = useTheme();
   const reduceMotion = useReducedMotion();
@@ -57,7 +56,7 @@ export function MicButton({ listening, onPress, disabled }: MicButtonProps) {
         style={{ width: SIZE, height: SIZE, boxShadow: `0px 10px 32px ${gradients.goldGlow}`, opacity: disabled ? 0.5 : 1 }}
       >
         <LinearGradient colors={gradients.gold} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
-        {/* Wrapped in a View so it stacks above the absolutely positioned gradient on web too. */}
+        {/* View wrapper keeps the icon above the gradient on web. */}
         <View>
           <Icon size={listening ? 34 : 44} color={colors.onPrimary} fill={listening ? colors.onPrimary : 'transparent'} strokeWidth={2} />
         </View>

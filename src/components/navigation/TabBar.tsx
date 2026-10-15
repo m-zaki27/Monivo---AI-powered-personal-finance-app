@@ -13,10 +13,7 @@ import { useTheme } from '@/theme/useTheme';
 import { AddActionSheet } from './AddActionSheet';
 import { AddTabButton } from './AddTabButton';
 
-/**
- * We derive the props type from <Tabs> itself rather than importing
- * React Navigation internals (Expo Router 56+ forbids @react-navigation/* imports).
- */
+/** Props derived from <Tabs>: Expo Router forbids @react-navigation/* imports. */
 type TabBarProps = Parameters<NonNullable<ComponentProps<typeof Tabs>['tabBar']>>[0];
 
 const tabMeta: Record<string, { label: string; icon: LucideIcon }> = {
@@ -32,8 +29,7 @@ export function TabBar({ state, navigation }: TabBarProps) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const keyboardUp = useKeyboardVisible();
 
-  // Typing (e.g. in the Assistant) needs the space, and on Android the floating
-  // bar would otherwise ride up on top of the keyboard.
+  // Otherwise the floating bar rides up on the keyboard on Android.
   if (keyboardUp) return null;
 
   return (
@@ -42,8 +38,7 @@ export function TabBar({ state, navigation }: TabBarProps) {
         className="absolute left-4 right-4 h-[72px] flex-row items-center px-2"
         style={{ bottom: Math.max(insets.bottom, 12) + 4 }}
       >
-        {/* Background layer gets its own overflow-hidden view so the raised
-            Add button can poke out above the pill without being clipped. */}
+        {/* Separate overflow-hidden layer so the raised Add button isn't clipped. */}
         <View
           className="absolute inset-0 overflow-hidden rounded-full border border-line"
           style={{ boxShadow: shadow.raised }}
@@ -51,8 +46,7 @@ export function TabBar({ state, navigation }: TabBarProps) {
           {Platform.OS === 'ios' ? (
             <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={{ flex: 1, backgroundColor: colors.tabBar }} />
           ) : (
-            // Android blur now needs a BlurTargetView wrapping the content
-            // behind; a near-opaque fill looks just as clean and is cheaper.
+            // Android blur needs a BlurTargetView; a near-opaque fill is cheaper.
             <View className="flex-1 bg-surface" style={{ opacity: 0.97 }} />
           )}
         </View>
@@ -81,8 +75,7 @@ export function TabBar({ state, navigation }: TabBarProps) {
               accessibilityLabel={meta.label}
               className="h-14 flex-1 items-center justify-center"
             >
-              {/* Icon-only: five labels won't fit a floating pill at a readable size.
-                  Screen readers still get the full name via accessibilityLabel. */}
+              {/* Icon-only (labels don't fit); screen readers use accessibilityLabel. */}
               <View
                 className="h-10 w-14 items-center justify-center rounded-full"
                 style={{ backgroundColor: focused ? withAlpha(colors.secondary, isDark ? 0.22 : 0.12) : 'transparent' }}

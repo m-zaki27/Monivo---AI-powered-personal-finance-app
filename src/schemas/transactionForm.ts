@@ -4,14 +4,10 @@ import { centsToInput, parseToCents } from '@/lib/money';
 
 import { transactionTypeSchema, type TransactionSource, type TransactionType } from './models';
 
-/** One million in cents — a sanity cap that catches a stray extra zero. */
+// Sanity cap (1M) to catch a stray extra zero.
 const MAX_CENTS = 1_000_000_00;
 
-/**
- * The form works with what the user typed (amount as a string like "12.5").
- * Converting to integer cents happens once, in `formToDraft`, so a half-typed
- * "12." never becomes a number by accident.
- */
+// Amount stays a string while editing; formToDraft converts it to cents once.
 export const transactionFormSchema = z.object({
   type: transactionTypeSchema,
   amount: z
@@ -27,14 +23,10 @@ export const transactionFormSchema = z.object({
 });
 export type TransactionFormValues = z.infer<typeof transactionFormSchema>;
 
-/** The scan review only edits these four; the rest comes from defaults. */
 export const receiptReviewSchema = transactionFormSchema.pick({ amount: true, merchant: true, categoryId: true, date: true });
 export type ReceiptReviewValues = z.infer<typeof receiptReviewSchema>;
 
-/**
- * A transaction that hasn't been saved yet. Manual entry, receipt scans and
- * voice all produce drafts; the confirm screen saves them. `key` is local only.
- */
+/** Unsaved transaction; `key` is local only. */
 export interface Draft {
   key: string;
   type: TransactionType;

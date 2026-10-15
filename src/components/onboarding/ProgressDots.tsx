@@ -6,7 +6,7 @@ import { AnimatedView } from '@/lib/animated';
 import { useTheme } from '@/theme';
 import { motion } from '@/theme/tokens';
 
-/** Current step stretches into a pill; finished steps stay cobalt. `step` is 1-based. */
+/** `step` is 1-based. */
 export function ProgressDots({ step, total = 3 }: { step: number; total?: number }) {
   return (
     <View

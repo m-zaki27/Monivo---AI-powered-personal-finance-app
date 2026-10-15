@@ -11,10 +11,7 @@ export interface Slice {
   share: number;
 }
 
-/**
- * Top N categories, everything else folded into "Other". More than ~6 slices
- * and a donut stops being readable: the small ones become slivers nobody can compare.
- */
+/** Top N categories, the rest folded into "Other" so the donut stays readable. */
 export function toSlices(byCategory: CategorySpend[], categories: Map<string, Category>, otherColor: string, max = 5): Slice[] {
   const total = byCategory.reduce((s, c) => s + c.total, 0);
   if (total === 0) return [];

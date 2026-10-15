@@ -28,15 +28,11 @@ interface PieceSpec {
 
 const rand = (min: number, max: number) => min + Math.random() * (max - min);
 
-/**
- * A single short burst — no library needed. Each piece is one Animated.View
- * driven by one shared value (0 → 1), so all the motion runs on the UI thread.
- * Skipped entirely when Reduce Motion is on.
- */
+/** One shared value drives every piece on the UI thread; skipped with Reduce Motion. */
 export function Confetti() {
   const { width } = useWindowDimensions();
   const reduceMotion = useReducedMotion();
-  // useState initializer: generate the random layout once, not on every render.
+  // Random layout generated once, not per render.
   const [pieces] = useState<PieceSpec[]>(() =>
     Array.from({ length: COUNT }, (_, i) => ({
       x: rand(0, width),

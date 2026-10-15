@@ -57,7 +57,6 @@ export function AccountFormFields({ form, currency, mode, balance = 0 }: Account
 
       <FormInput control={control} name="name" label="Name" placeholder={isCash ? 'e.g. Wallet' : 'e.g. Everyday Checking'} leftIcon={Tag} autoCapitalize="words" />
 
-      {/* Cash has no bank or card number, so those fields simply don't appear. */}
       {!isCash && (
         <View className="flex-row gap-3">
           <FormInput control={control} name="institution" label="Bank (optional)" placeholder="First Harbor" leftIcon={Building2} containerClassName="flex-[3]" autoCapitalize="words" />

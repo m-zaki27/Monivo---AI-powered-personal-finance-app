@@ -90,7 +90,7 @@ export function BudgetFormFields({ form, currency, spent }: BudgetFormFieldsProp
         control={control}
         name="emailAlerts"
         render={({ field }) => (
-          <View className="flex-row items-center gap-4 rounded-card border border-line bg-surface p-4">
+          <View className="flex-row items-center gap-4 rounded-card border border-glass-line bg-glass p-4">
             <View className="h-11 w-11 items-center justify-center rounded-full" style={{ backgroundColor: withAlpha(colors.secondary, 0.14) }}>
               <Mail size={20} color={colors.secondary} strokeWidth={2} />
             </View>

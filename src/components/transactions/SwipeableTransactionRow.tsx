@@ -23,10 +23,7 @@ interface SwipeableTransactionRowProps {
   onDelete: (t: Transaction) => void;
 }
 
-/**
- * Swipe left to reveal a rose Delete button. Screen-reader users can't swipe,
- * so the same action is also offered through `accessibilityActions`.
- */
+/** Swipe-to-delete, also exposed via accessibilityActions since screen readers can't swipe. */
 export const SwipeableTransactionRow = memo(function SwipeableTransactionRow({ onDelete, ...row }: SwipeableTransactionRowProps) {
   const ref = useRef<SwipeableMethods>(null);
   const t = row.transaction;
@@ -61,7 +58,6 @@ export const SwipeableTransactionRow = memo(function SwipeableTransactionRow({ o
 
 function DeleteAction({ translation, onPress }: { translation: SharedValue<number>; onPress: () => void }) {
   const { colors, palette } = useTheme();
-  // The button slides in with the row (translation goes 0 → −ACTION_WIDTH).
   const style = useAnimatedStyle(() => ({
     transform: [{ translateX: translation.value + ACTION_WIDTH }],
   }));

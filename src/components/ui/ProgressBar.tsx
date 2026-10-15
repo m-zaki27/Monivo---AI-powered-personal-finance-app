@@ -31,7 +31,7 @@ export function ProgressBar({ value, warnAt = 0.8, color, height = 8, accessibil
   const tone = progressTone(value, warnAt);
   const fill = color ?? { normal: colors.secondary, warning: colors.warning, over: colors.expense }[tone];
 
-  // Animate in pixels: we measure the track once via onLayout.
+  // Animates in pixels, using the track width measured via onLayout.
   useEffect(() => {
     width.value = withTiming(trackWidth * Math.min(Math.max(value, 0), 1), { duration: motion.slow });
   }, [value, trackWidth, width]);

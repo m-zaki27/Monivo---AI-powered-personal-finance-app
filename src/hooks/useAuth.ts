@@ -4,11 +4,6 @@ import { authApi, userApi, type BackupCodesResult } from '@/services';
 
 import { queryKeys } from './queryKeys';
 
-/**
- * Auth actions are mutations: they change something on the server and we care
- * about their pending/error state, not about caching a result.
- */
-
 export const useSignUp = () => useMutation({ mutationFn: authApi.signUp });
 export const useResendCode = () => useMutation({ mutationFn: authApi.resendCode });
 export const useVerifyEmail = () => useMutation({ mutationFn: authApi.verifyEmail });
@@ -17,14 +12,10 @@ export const useVerifyMfa = () => useMutation({ mutationFn: authApi.verifyMfa })
 export const useRequestPasswordReset = () => useMutation({ mutationFn: authApi.requestPasswordReset });
 export const useVerifyResetCode = () => useMutation({ mutationFn: authApi.verifyResetCode });
 export const useResetPassword = () => useMutation({ mutationFn: authApi.resetPassword });
-/** Deletes the signed-in user (not to be confused with useDeleteAccount for money accounts). */
+/** Deletes the signed-in user, not a money account. */
 export const useDeleteMyAccount = () => useMutation({ mutationFn: authApi.deleteAccount });
 
-/**
- * Starting MFA setup enrolls a new (unverified) factor on the server.
- * staleTime: Infinity keeps the same QR code while the screen is open;
- * gcTime: 0 throws it away on leaving, so the next attempt starts fresh.
- */
+// Enrolls a new factor: keep one QR code while open, discard it on leave.
 export function useMfaSetup() {
   return useQuery({
     queryKey: queryKeys.auth.mfaSetup,
@@ -35,7 +26,7 @@ export function useMfaSetup() {
   });
 }
 
-/** Freshly issued codes live only in memory: the server can never show them again. */
+// New codes are kept in memory only; the server can't return them again.
 function useStoreNewCodes() {
   const qc = useQueryClient();
   return (result: BackupCodesResult) => {
@@ -57,7 +48,7 @@ export function useRegenerateBackupCodes() {
   return useMutation({ mutationFn: authApi.regenerateBackupCodes, onSuccess: store });
 }
 
-/** Codes generated in this session (null once you leave the backup codes screen). */
+/** Codes issued this session; null once the screen is left. */
 export function useNewBackupCodes() {
   return useQuery<BackupCodesResult | null>({
     queryKey: queryKeys.auth.backupCodes,
@@ -81,6 +72,14 @@ export function useDisableMfa() {
         qc.invalidateQueries({ queryKey: queryKeys.auth.backupStatus }),
       ]),
   });
+}
+
+export const useRequestEmailChange = () => useMutation({ mutationFn: authApi.requestEmailChange });
+export const useResendEmailChange = () => useMutation({ mutationFn: authApi.resendEmailChange });
+
+export function useVerifyEmailChange() {
+  const qc = useQueryClient();
+  return useMutation({ mutationFn: authApi.verifyEmailChange, onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.me }) });
 }
 
 export function useCompleteOnboarding() {

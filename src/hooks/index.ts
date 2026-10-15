@@ -12,3 +12,4 @@ export * from './useDebouncedValue';
 export * from './useAi';
 export * from './useAssistant';
 export * from './useKeyboardVisible';
+export * from './useCountUp';

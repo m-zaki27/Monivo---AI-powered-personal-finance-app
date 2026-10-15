@@ -7,11 +7,7 @@ type FormInputProps<T extends FieldValues> = Omit<InputProps, 'value' | 'onChang
   name: Path<T>;
 };
 
-/**
- * <Input> wired to React Hook Form. RHF keeps form state outside React state,
- * so typing in one field doesn't re-render the whole form. The `ref` lets
- * `form.setFocus('password')` jump between fields.
- */
+/** <Input> wired to React Hook Form; `ref` lets `setFocus` jump between fields. */
 export function FormInput<T extends FieldValues>({ control, name, ...rest }: FormInputProps<T>) {
   return (
     <Controller

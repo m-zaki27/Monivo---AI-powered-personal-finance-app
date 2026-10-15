@@ -148,6 +148,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_url: string | null
           created_at: string
           currency: string
           first_name: string
@@ -159,6 +160,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          avatar_url?: string | null
           created_at?: string
           currency?: string
           first_name?: string
@@ -170,6 +172,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          avatar_url?: string | null
           created_at?: string
           currency?: string
           first_name?: string
@@ -286,10 +289,8 @@ export type Database = {
         Args: { p_kind: string; p_limit: number }
         Returns: boolean
       }
-      has_verified_mfa: { Args: never; Returns: boolean }
       invoke_notify: { Args: { p_mode: string }; Returns: undefined }
       month_summary: { Args: { p_from: string; p_to: string }; Returns: Json }
-      my_account_count: { Args: never; Returns: number }
       set_default_account: {
         Args: { p_account_id: string }
         Returns: undefined

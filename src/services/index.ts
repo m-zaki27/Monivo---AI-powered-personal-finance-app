@@ -2,6 +2,7 @@ export * as accountsApi from './accounts';
 export * as aiApi from './ai';
 export * as assistantApi from './assistant';
 export * as authApi from './auth';
+export * as avatarApi from './avatar';
 export * as budgetApi from './budget';
 export * as transactionsApi from './transactions';
 export * as userApi from './user';

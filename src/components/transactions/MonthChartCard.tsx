@@ -11,12 +11,9 @@ interface MonthChartCardProps {
   currency: string;
 }
 
-/**
- * Daily in/out for the current month. It has its own query (this month only,
- * following the account chip), so search text doesn't reshape the chart.
- */
+/** Own query (this month, current account) so search text doesn't reshape the chart. */
 export function MonthChartCard({ accountId, currency }: MonthChartCardProps) {
-  // Computed once per mount, so the query key (and cache entry) stays stable.
+  // Once per mount so the query key stays stable.
   const [now, from] = useMemo(() => {
     const n = new Date();
     return [n, startOfMonth(n).toISOString()] as const;
@@ -27,7 +24,7 @@ export function MonthChartCard({ accountId, currency }: MonthChartCardProps) {
   return (
     <Card className="gap-2">
       <SectionHeader title="This month" />
-      {q.isError ? (
+      {q.isError && !q.data ? (
         <ErrorState compact error={q.error} onRetry={() => q.refetch()} />
       ) : !days ? (
         <View className="gap-3">

@@ -13,10 +13,7 @@ import {
   type TransactionFormValues,
 } from '@/schemas/transactionForm';
 
-/**
- * Two jobs: a fresh manual entry (no params), or editing any draft from the
- * scan / voice / confirm screens (`?draftKey=…`). Same form either way.
- */
+/** New manual entry, or edit a scan/voice/confirm draft via `?draftKey=`. */
 export default function AddManualScreen() {
   const { draftKey } = useLocalSearchParams<{ draftKey?: string }>();
   const { drafts, setDrafts, updateDraft } = useDrafts();

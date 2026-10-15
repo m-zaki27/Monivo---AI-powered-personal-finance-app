@@ -12,10 +12,7 @@ interface LogoProps {
   color?: string;
 }
 
-/**
- * The Monivo mark: a rounded "M" whose middle rises into a small peak,
- * hinting at a chart ticking upward. One stroked path with round joins.
- */
+/** The Monivo "M" mark, its middle rising like a chart. */
 export function LogoMark({ size = 40, color }: Omit<LogoProps, 'withWordmark'>) {
   const { colors } = useTheme();
   const stroke = color ?? colors.logo;

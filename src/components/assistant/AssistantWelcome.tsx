@@ -24,7 +24,7 @@ export function AssistantWelcome({ name, prompts, onPick }: { name?: string; pro
       <View className="gap-2">
         {prompts.map((p, i) => (
           <AnimatedView key={p} entering={FadeInDown.duration(400).delay(100 + i * 60)}>
-            <PressableScale onPress={() => onPick(p)} scaleTo={0.98} accessibilityLabel={p} className="min-h-12 justify-center rounded-input border border-line bg-surface px-4 py-3">
+            <PressableScale onPress={() => onPick(p)} scaleTo={0.98} accessibilityLabel={p} className="min-h-12 justify-center rounded-input border border-glass-line bg-glass px-4 py-3">
               <Text weight="semibold">{p}</Text>
             </PressableScale>
           </AnimatedView>

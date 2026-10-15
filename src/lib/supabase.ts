@@ -1,41 +1,33 @@
 import 'react-native-url-polyfill/auto';
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
 import { AppState, Platform } from 'react-native';
 
 import type { Database } from './database.types';
+import { secureStorage } from './secureStorage';
 
-/**
- * The one Supabase client. Keys come from `.env.local` (EXPO_PUBLIC_ vars are
- * inlined into the app at build time). The anon key is *meant* to be public:
- * row-level security in the database is what protects each user's data.
- */
+// The anon key is public by design; row-level security protects user data.
 const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
 export const isSupabaseConfigured = Boolean(url && anonKey);
 
-// <Database> types every table, view and function from the generated schema
-// (`npx supabase gen types typescript`), so queries are checked at compile time.
+/** Matches supabase-js's default session storage key. */
+export const authStorageKey = `sb-${new URL(url || 'http://localhost').hostname.split('.')[0]}-auth-token`;
+
 export const supabase = createClient<Database>(url || 'http://localhost:54321', anonKey || 'missing-anon-key', {
   auth: {
-    // Supabase's recommended storage for React Native. Survives app restarts.
-    storage: AsyncStorage,
+    storage: secureStorage,
     autoRefreshToken: true,
     persistSession: true,
-    // There are no auth links to parse in a native app: we use 6-digit codes.
+    // Auth uses 6-digit codes, not links.
     detectSessionInUrl: false,
-    // Native MFA backup codes (still flagged experimental in supabase-js).
+    // MFA backup codes (experimental in supabase-js).
     experimental: { recoveryCodes: true },
   },
 });
 
-/**
- * Only refresh tokens while the app is in the foreground. When it comes back,
- * refreshing straight away means an expired session is renewed before the
- * first request rather than failing it.
- */
+// Refresh tokens only while foregrounded (renews an expired session before the first request).
 if (Platform.OS !== 'web') {
   AppState.addEventListener('change', (state) => {
     if (state === 'active') supabase.auth.startAutoRefresh();

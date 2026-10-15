@@ -22,11 +22,7 @@ export const PreferenceContext = createContext<PreferenceContextValue>({
 /** The resolved scheme for the nearest <ThemeScope>. */
 export const SchemeContext = createContext<ColorSchemeName>('dark');
 
-/**
- * NativeWind `vars()` turns each theme into CSS variables. Tailwind classes such
- * as `bg-surface` read `var(--color-surface)`, so a subtree flips theme just by
- * being wrapped in a different scope — no `dark:` prefix on every class.
- */
+// Themes as CSS variables, so wrapping a subtree in a scope re-themes it without `dark:` classes.
 const schemeVars: Record<ColorSchemeName, ReturnType<typeof vars>> = {
   dark: vars(toVars(themes.dark)),
   light: vars(toVars(themes.light)),
@@ -41,6 +37,8 @@ function toVars(c: (typeof themes)['dark']) {
     '--color-text': c.text,
     '--color-muted': c.muted,
     '--color-scrim': c.scrim,
+    '--color-glass': c.glass,
+    '--color-glass-border': c.glassBorder,
   };
 }
 
@@ -49,7 +47,7 @@ interface ThemeScopeProps extends ViewProps {
   children: ReactNode;
 }
 
-/** Applies a theme to everything inside it. Nestable (the /dev screen shows both). */
+/** Nestable (e.g. sheets re-apply it on web). */
 export function ThemeScope({ scheme, style, children, ...rest }: ThemeScopeProps) {
   return (
     <SchemeContext.Provider value={scheme}>
@@ -77,7 +75,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     AsyncStorage.setItem(STORAGE_KEY, p).catch(() => {});
   }, []);
 
-  // Dark is the hero: if the OS gives no answer, fall back to dark.
+  // Default to dark when the OS reports no preference.
   const scheme: ColorSchemeName =
     preference === 'system' ? (system === 'light' ? 'light' : 'dark') : preference;
 

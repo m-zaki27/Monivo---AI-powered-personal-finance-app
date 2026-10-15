@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { View, type DimensionValue } from 'react-native';
+import type { DimensionValue } from 'react-native';
 import { Easing, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 
 import { AnimatedView } from '@/lib/animated';
@@ -32,16 +32,5 @@ export function Skeleton({ width = '100%', height = 16, rounded = 'rounded-sm', 
       className={cn('bg-raised', rounded, className)}
       style={[{ width, height }, color ? { backgroundColor: color } : null, style]}
     />
-  );
-}
-
-/** A few lines of text-shaped skeletons. */
-export function SkeletonText({ lines = 2, className }: { lines?: number; className?: string }) {
-  return (
-    <View className={cn('gap-2', className)}>
-      {Array.from({ length: lines }, (_, i) => (
-        <Skeleton key={i} height={12} width={i === lines - 1 ? '60%' : '100%'} />
-      ))}
-    </View>
   );
 }

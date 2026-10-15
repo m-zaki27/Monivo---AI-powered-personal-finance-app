@@ -1,10 +1,7 @@
 import * as Haptics from 'expo-haptics';
 import { Platform } from 'react-native';
 
-/**
- * One wrapper so haptic "vocabulary" stays consistent and web never crashes.
- * Rule of thumb: tap = light, toggle/select = selection, save = success.
- */
+// No-ops on web, where expo-haptics is unsupported.
 const enabled = Platform.OS === 'ios' || Platform.OS === 'android';
 
 export const haptics = {

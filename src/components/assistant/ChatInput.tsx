@@ -10,7 +10,7 @@ interface ChatInputProps {
   disabled?: boolean;
 }
 
-/** Pill input with a gold send button that only lights up when there's something to send. */
+/** Pill input; the send button only lights up when there's text. */
 export function ChatInput({ onSend, disabled }: ChatInputProps) {
   const { colors, isDark } = useTheme();
   const [text, setText] = useState('');
@@ -23,7 +23,7 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
   };
 
   return (
-    <View className="min-h-14 flex-row items-end gap-2 rounded-[28px] border border-line bg-surface py-1.5 pl-5 pr-1.5">
+    <View className="min-h-14 flex-row items-end gap-2 rounded-[28px] border border-glass-line bg-glass py-1.5 pl-5 pr-1.5">
       <TextInput
         value={text}
         onChangeText={setText}

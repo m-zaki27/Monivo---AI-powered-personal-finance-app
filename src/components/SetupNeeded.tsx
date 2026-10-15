@@ -2,7 +2,7 @@ import { KeyRound } from 'lucide-react-native';
 
 import { EmptyState, Screen, Text } from '@/components/ui';
 
-/** Shown instead of the app when the Supabase keys are missing, so a blank screen never hides the cause. */
+/** Shown when Supabase keys are missing, instead of a blank screen. */
 export function SetupNeeded() {
   return (
     <Screen contentClassName="justify-center gap-4">

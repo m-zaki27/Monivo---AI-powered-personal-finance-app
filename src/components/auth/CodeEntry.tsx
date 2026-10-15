@@ -13,10 +13,7 @@ interface CodeEntryProps {
   autoFocus?: boolean;
 }
 
-/**
- * Six boxes + submit. Submits automatically when the last digit lands, so
- * most people never tap the button; it's there for accessibility and retries.
- */
+/** Six boxes + submit; auto-submits on the last digit (button kept for accessibility and retries). */
 export function CodeEntry({ onSubmit, submitLabel = 'Verify', children, autoFocus = true }: CodeEntryProps) {
   const [code, setCode] = useState('');
   const [error, setError] = useState<string>();

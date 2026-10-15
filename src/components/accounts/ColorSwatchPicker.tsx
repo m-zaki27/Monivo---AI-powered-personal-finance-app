@@ -7,7 +7,7 @@ import { categoryColors, palette, type CategoryColor } from '@/theme/tokens';
 
 const swatches = Object.keys(categoryColors) as CategoryColor[];
 
-/** Brand-safe colours only: the same set categories use, so nothing off-palette can sneak in. */
+/** Uses the category palette so nothing off-palette can sneak in. */
 export function ColorSwatchPicker({ value, onChange }: { value: CategoryColor; onChange: (c: CategoryColor) => void }) {
   return (
     <View className="gap-3">

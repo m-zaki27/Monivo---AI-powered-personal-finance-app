@@ -1,7 +1,3 @@
-/**
- * Tiny date helpers built on Intl — enough for this app without a date library.
- * Dates travel as ISO strings (what an API would send); we parse at the edge.
- */
 export type ISODate = string;
 
 const DAY_MS = 86_400_000;

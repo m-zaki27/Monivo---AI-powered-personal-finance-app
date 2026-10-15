@@ -24,11 +24,7 @@ interface BlobProps {
   duration: number;
 }
 
-/**
- * A "mesh" built from a few large radial-gradient blobs that drift slowly.
- * Each blob is its own SVG fading from colour to transparent, so they blend
- * where they overlap. Motion stops if the user has Reduce Motion turned on.
- */
+/** Drifting radial-gradient blobs (one SVG each, so overlaps blend); stops under Reduce Motion. */
 function Blob({ color, opacity, size, x, y, drift, duration }: BlobProps) {
   const reduceMotion = useReducedMotion();
   const t = useSharedValue(0);

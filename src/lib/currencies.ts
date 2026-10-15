@@ -1,8 +1,3 @@
-/**
- * Currencies offered during onboarding. Static reference data (it ships with
- * the app, it isn't user data), so it lives in lib/ rather than mock/.
- * Flags are emoji: zero assets, and they render natively on iOS and Android.
- */
 export interface Currency {
   code: string;
   name: string;
@@ -10,11 +5,11 @@ export interface Currency {
   flag: string;
   /** Searchable country / region names */
   region: string;
-  /** Minor-unit digits; 0 means no decimal key on the keypad (e.g. yen). */
+  /** 0 hides the keypad's decimal key (e.g. yen). */
   decimals: 0 | 2;
 }
 
-export const currencies: Currency[] = [
+const currencies: Currency[] = [
   { code: 'USD', name: 'US Dollar', symbol: '$', flag: '🇺🇸', region: 'United States', decimals: 2 },
   { code: 'EUR', name: 'Euro', symbol: '€', flag: '🇪🇺', region: 'Eurozone Germany France Spain Italy', decimals: 2 },
   { code: 'GBP', name: 'British Pound', symbol: '£', flag: '🇬🇧', region: 'United Kingdom', decimals: 2 },

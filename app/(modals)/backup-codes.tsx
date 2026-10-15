@@ -8,11 +8,7 @@ import { Button, Card, Dialog, EmptyState, ErrorState, Text, useToast } from '@/
 import { useBackupCodesStatus, useNewBackupCodes, useRegenerateBackupCodes } from '@/hooks';
 import { closeModal } from '@/lib/navigation';
 
-/**
- * Two modes. Straight after generating, the codes themselves (shown once, never
- * again: the server only keeps hashes). Any other time, how many are left, plus
- * a way to replace the whole set.
- */
+/** Fresh codes are shown once (server keeps only hashes); otherwise the count left and a regenerate option. */
 export default function BackupCodesScreen() {
   const { fromSetup } = useLocalSearchParams<{ fromSetup?: string }>();
   const fresh = useNewBackupCodes();

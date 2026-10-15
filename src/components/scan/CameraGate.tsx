@@ -9,10 +9,7 @@ interface CameraGateProps {
   onUseSample: () => void;
 }
 
-/**
- * Shown when there's no camera access yet. If the user said "Don't allow"
- * permanently, the OS won't show the prompt again, so we send them to Settings.
- */
+/** If permission was permanently denied the OS won't re-prompt, so link to Settings. */
 export function CameraGate({ canAskAgain, onRequest, onUseSample }: CameraGateProps) {
   return (
     <View className="flex-1 justify-center gap-4 px-6">

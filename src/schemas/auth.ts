@@ -1,18 +1,13 @@
 import { z } from 'zod';
 
-/**
- * Form + session schemas. Messages are written for people, not developers:
- * they say what to do, not what went wrong internally.
- */
-
 export const emailSchema = z
   .string()
   .trim()
   .min(1, 'Enter your email')
   .pipe(z.email("That email doesn't look right"));
 
-/** New passwords only — logging in just checks the field isn't empty. */
-export const newPasswordSchema = z
+/** New passwords only; login just requires a non-empty field. */
+const newPasswordSchema = z
   .string()
   .min(8, 'Use at least 8 characters')
   .regex(/[A-Za-z]/, 'Add at least one letter')
@@ -27,7 +22,6 @@ export const signUpSchema = z
     password: newPasswordSchema,
     confirm: z.string().min(1, 'Type your password again'),
   })
-  // Cross-field rules go in .refine(); `path` decides which field shows the error.
   .refine((d) => d.password === d.confirm, { path: ['confirm'], message: "Passwords don't match" });
 export type SignUpForm = z.infer<typeof signUpSchema>;
 
@@ -48,10 +42,7 @@ export const resetPasswordSchema = z
   .refine((d) => d.password === d.confirm, { path: ['confirm'], message: "Passwords don't match" });
 export type ResetPasswordForm = z.infer<typeof resetPasswordSchema>;
 
-/**
- * Backup codes look like "K4M9-X7QP-2AB8-HT3Z". The server ignores dashes,
- * spaces and letter case, so we only check it's roughly the right shape.
- */
+// Loose shape check only; the server ignores dashes, spaces and case.
 export const backupCodeSchema = z.object({
   code: z
     .string()

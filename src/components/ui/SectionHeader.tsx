@@ -10,16 +10,35 @@ interface SectionHeaderProps {
   actionLabel?: string;
   onAction?: () => void;
   right?: ReactNode;
+  /** For card-less sections: bigger title over a hairline rule with a gold underline */
+  prominent?: boolean;
 }
 
-/** Title row above a dashboard section, with an optional link on the right. */
-export function SectionHeader({ title, actionLabel, onAction, right }: SectionHeaderProps) {
+export function SectionHeader({ title, actionLabel, onAction, right, prominent }: SectionHeaderProps) {
+  const trailing = actionLabel && onAction ? <TextLink label={actionLabel} onPress={onAction} /> : right;
+
+  if (!prominent) {
+    return (
+      <View className="min-h-11 flex-row items-center justify-between">
+        <Text variant="title" accessibilityRole="header">
+          {title}
+        </Text>
+        {trailing}
+      </View>
+    );
+  }
+
   return (
-    <View className="min-h-11 flex-row items-center justify-between">
-      <Text variant="title" accessibilityRole="header">
-        {title}
-      </Text>
-      {actionLabel && onAction ? <TextLink label={actionLabel} onPress={onAction} /> : right}
+    <View>
+      <View className="min-h-11 flex-row items-end justify-between pb-2">
+        <Text variant="h2" accessibilityRole="header">
+          {title}
+        </Text>
+        {trailing}
+      </View>
+      <View className="h-px bg-line">
+        <View className="absolute -top-px left-0 h-[3px] w-10 rounded-full bg-gold" />
+      </View>
     </View>
   );
 }

@@ -8,17 +8,15 @@ import { IconButton, Screen, Text } from '@/components/ui';
 import { ProgressDots } from './ProgressDots';
 
 interface OnboardingFrameProps {
-  /** 1-based; 4 = finished (all dots done) */
+  /** 1-based; 4 = finished */
   step: number;
   title?: string;
   subtitle?: string;
   children: ReactNode;
   footer?: ReactNode;
-  /** Hide the back arrow (first and last steps) */
   noBack?: boolean;
 }
 
-/** Progress dots across the top, optional title block, fixed footer. */
 export function OnboardingFrame({ step, title, subtitle, children, footer, noBack }: OnboardingFrameProps) {
   return (
     <Screen

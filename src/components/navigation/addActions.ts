@@ -9,10 +9,7 @@ export interface AddAction {
   href: '/scan' | '/voice' | '/add-manual';
 }
 
-/**
- * The three ways to add a transaction. Defined once and shared by the tab
- * bar's Add sheet and Home's quick-actions row, so they can never drift apart.
- */
+/** Shared by the tab bar's Add sheet and Home's quick actions so they stay in sync. */
 export const addActions: AddAction[] = [
   {
     key: 'scan',

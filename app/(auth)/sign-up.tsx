@@ -14,16 +14,14 @@ export default function SignUpScreen() {
   const { control, handleSubmit, setError, setFocus, formState } = useForm<SignUpForm>({
     resolver: zodResolver(signUpSchema),
     defaultValues: { name: '', email: '', password: '', confirm: '' },
-    // Validate a field once it's been left, then live as the user fixes it —
-    // no red errors while someone is still typing their email for the first time.
+    // No errors while first typing; validate on blur, then live while fixing.
     mode: 'onTouched',
   });
 
   const submit = handleSubmit(async ({ name, email, password }) => {
     try {
       const { needsVerification } = await signUp.mutateAsync({ name, email, password });
-      // If the project doesn't require email confirmation, Supabase signs them in straight away
-      // and the guard moves on to onboarding; otherwise they enter the emailed code.
+      // Without email confirmation Supabase signs them in and the guard moves to onboarding.
       if (needsVerification) router.push({ pathname: '/verify', params: { email, purpose: 'signup' } });
     } catch (e) {
       applyApiError(e, setError, ['email']);

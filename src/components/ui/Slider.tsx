@@ -23,12 +23,7 @@ interface SliderProps {
   formatValue?: (v: number) => string;
 }
 
-/**
- * A small slider: one Pan (drag) + one Tap gesture on the track, running on
- * the UI thread. It only reports *stepped* values back to React, so dragging
- * doesn't re-render the screen 60 times a second. Screen readers get swipe
- * up/down to adjust via `accessibilityActions`.
- */
+/** UI-thread slider that only reports stepped values to JS, to avoid re-rendering on every frame. */
 export function Slider({ value, min, max, step, onChange, color, accessibilityLabel, formatValue = String }: SliderProps) {
   const { colors } = useTheme();
   const fill = color ?? colors.secondary;
@@ -69,8 +64,7 @@ export function Slider({ value, min, max, step, onChange, color, accessibilityLa
     })
     .onUpdate((e) => update(startX.get() + e.translationX))
     .onFinalize(() => {
-      // Snap the thumb onto the chosen step.
-      x.set(((lastStep.get() - min) / (max - min)) * width);
+          x.set(((lastStep.get() - min) / (max - min)) * width);
     });
 
   const thumbStyle = useAnimatedStyle(() => ({ transform: [{ translateX: x.get() - THUMB / 2 }] }));

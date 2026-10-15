@@ -1,10 +1,12 @@
 import { router } from 'expo-router';
 import { Receipt } from 'lucide-react-native';
 import { View } from 'react-native';
+import { FadeInDown, LinearTransition } from 'react-native-reanimated';
 
 import { TransactionRow, TransactionRowSkeleton } from '@/components/transactions';
-import { Card, EmptyState, ErrorState, SectionHeader } from '@/components/ui';
+import { EmptyState, ErrorState, SectionHeader } from '@/components/ui';
 import { useAccountMap, useCategoryMap } from '@/hooks';
+import { AnimatedView } from '@/lib/animated';
 import type { Transaction } from '@/schemas/models';
 
 interface RecentTransactionsProps {
@@ -14,15 +16,14 @@ interface RecentTransactionsProps {
   currency: string;
 }
 
+/** Latest few transactions as a plain list. */
 export function RecentTransactions({ transactions, error, onRetry, currency }: RecentTransactionsProps) {
   const categories = useCategoryMap();
   const accounts = useAccountMap();
 
   return (
-    <Card padding="sm" className="px-4">
-      <View className="px-2">
-        <SectionHeader title="Recent" actionLabel="See all" onAction={() => router.push('/transactions')} />
-      </View>
+    <View className="gap-2">
+      <SectionHeader prominent title="Recent" actionLabel="See all" onAction={() => router.push('/transactions')} />
       {error ? (
         <ErrorState compact error={error} onRetry={onRetry} />
       ) : !transactions ? (
@@ -35,17 +36,19 @@ export function RecentTransactions({ transactions, error, onRetry, currency }: R
           message="Add one with the + button and it'll show up here."
         />
       ) : (
-        transactions.map((t) => (
-          <TransactionRow
-            key={t.id}
-            transaction={t}
-            category={categories.get(t.categoryId)}
-            accountName={accounts.get(t.accountId)?.name}
-            currency={currency}
-            showDate
-          />
+        // Rows drift up one after another; when one is added or removed the rest slide into place.
+        transactions.map((t, i) => (
+          <AnimatedView key={t.id} entering={FadeInDown.duration(320).delay(i * 60)} layout={LinearTransition.springify().damping(18)}>
+            <TransactionRow
+              transaction={t}
+              category={categories.get(t.categoryId)}
+              accountName={accounts.get(t.accountId)?.name}
+              currency={currency}
+              showDate
+            />
+          </AnimatedView>
         ))
       )}
-    </Card>
+    </View>
   );
 }

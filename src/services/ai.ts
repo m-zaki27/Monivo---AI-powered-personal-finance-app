@@ -6,13 +6,9 @@ import type { TransactionType } from '@/schemas/models';
 
 import { ApiError } from './errors';
 
-/**
- * Real AI (Gemini) via the `ai` Edge Function. The Gemini key lives in
- * Supabase secrets, never in the app. The only mocks left are the sample
- * receipt and the voice demo, for devices without a camera or microphone.
- */
+// Gemini runs in the `ai` Edge Function so its key stays server-side.
 
-/** Calls the ai function and turns its `{ error }` replies into friendly ApiErrors. */
+/** Maps the function's `{ error }` replies to ApiErrors. */
 export async function invokeAi<T>(body: Record<string, unknown>): Promise<T> {
   const { data, error } = await supabase.functions.invoke('ai', { body });
   if (!error) return data as T;
@@ -24,14 +20,12 @@ export async function invokeAi<T>(body: Record<string, unknown>): Promise<T> {
   throw new ApiError("We couldn't reach Monivo. Check your connection and try again.", 0);
 }
 
-/** "2026-10-12" from the AI → an ISO time: now if it's today, else noon that day (safe across time zones). */
+// Today → now; other days → local noon, so the date survives time-zone shifts.
 function dayToIso(day: string | null): string {
   if (!day || day === dayKey(new Date())) return new Date().toISOString();
   const [y, m, d] = day.split('-').map(Number);
   return new Date(y!, m! - 1, d!, 12).toISOString();
 }
-
-// --- Receipts ---
 
 export type ReceiptPhoto = 'sample' | { uri: string; base64: string; mimeType: string };
 
@@ -41,13 +35,13 @@ export interface ReceiptExtraction {
   /** ISO */
   date: string;
   categoryId: string;
-  /** 0–1: how sure the model is. The review screen flags low confidence. */
+  /** 0–1 model confidence */
   confidence: number;
 }
 
 export async function extractReceipt(photo: ReceiptPhoto): Promise<ReceiptExtraction> {
   if (photo === 'sample') {
-    // Demo receipt for web/simulators: no network call.
+    // Offline demo for devices without a camera.
     await new Promise((r) => setTimeout(r, 1500));
     const date = new Date();
     date.setMinutes(date.getMinutes() - 20);
@@ -62,8 +56,6 @@ export async function extractReceipt(photo: ReceiptPhoto): Promise<ReceiptExtrac
   return { ...r, date: dayToIso(r.date) };
 }
 
-// --- Voice ---
-
 export interface ParsedItem {
   type: TransactionType;
   amount: number;
@@ -77,7 +69,7 @@ export interface VoiceResult {
   items: ParsedItem[];
 }
 
-/** Either a real recording (sent to Gemini) or the demo sentence (parsed locally). */
+/** Demo transcripts are parsed locally, without Gemini. */
 export type VoiceInput = { kind: 'audio'; base64: string; mimeType: string } | { kind: 'demo'; transcript: string };
 
 export async function processVoice(input: VoiceInput): Promise<VoiceResult> {
@@ -91,7 +83,7 @@ export async function processVoice(input: VoiceInput): Promise<VoiceResult> {
   return { transcript: r.transcript, items: r.items.map((it) => ({ ...it, date: dayToIso(it.date) })) };
 }
 
-/** Sentences the voice demo "hears" when there's no microphone (web, simulator, permission off). */
+/** Voice demo input when no microphone is available. */
 export const sampleUtterances = [
   'Spent twelve fifty on lunch at Chipotle and forty two dollars on gas at Shell',
   'Paid eighteen dollars for an Uber to the airport yesterday',

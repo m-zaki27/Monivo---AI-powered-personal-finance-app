@@ -20,11 +20,7 @@ interface AmountFieldProps {
   autoFocus?: boolean;
 }
 
-/**
- * The big amount. A real TextInput with the decimal keypad (not our custom
- * Keypad) because this screen also has text fields, and two keyboards
- * fighting for space is worse than one.
- */
+/** A real TextInput, not the custom Keypad: this screen also has text fields and two keyboards would fight. */
 export function AmountField({ value, onChange, onBlur, currency, tone = 'expense', error, size = 'lg', autoFocus }: AmountFieldProps) {
   const { colors, isDark } = useTheme();
   const ref = useRef<TextInput>(null);
@@ -36,10 +32,8 @@ export function AmountField({ value, onChange, onBlur, currency, tone = 'expense
 
   return (
     <View className="items-center gap-2">
-      {/* Tapping anywhere on the row focuses the input; the symbol isn't part of it. */}
       <Pressable onPress={() => ref.current?.focus()} className="max-w-full flex-row items-center justify-center" accessible={false}>
-        {/* Invisible copy of the text, measured so the input hugs its content.
-            Without it a TextInput keeps a fixed width and the number can't stay centred. */}
+        {/* Hidden copy measured so the TextInput hugs its content and stays centred. */}
         <Text
           accessibilityElementsHidden
           importantForAccessibility="no"

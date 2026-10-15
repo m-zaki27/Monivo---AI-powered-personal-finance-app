@@ -8,10 +8,7 @@ import { addDays, formatShortDate, isSameDay, toDate } from '@/lib/dates';
 import { CalendarSheet } from './CalendarSheet';
 import { FieldLabel } from './FieldLabel';
 
-/**
- * Keeps the time sensible when only the day changes: today → right now,
- * any other day → noon (so time-zone shifts can't push it to a neighbouring day).
- */
+/** Today keeps the current time; other days use noon so time-zone shifts can't change the day. */
 function withSensibleTime(day: Date): string {
   const now = new Date();
   if (isSameDay(day, now)) return now.toISOString();

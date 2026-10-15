@@ -13,12 +13,7 @@ interface DeleteAccountDialogProps {
   loading?: boolean;
 }
 
-/**
- * Two variants. An empty account gets a plain "are you sure". One with
- * history gets a warning box spelling out what else disappears, and a button
- * that says it too ("Delete account and 24 transactions"), so nobody loses
- * data by tapping through.
- */
+/** With history, warns and names the transaction count on the button so nobody loses data by tapping through. */
 export function DeleteAccountDialog({ account, onCancel, onConfirm, loading }: DeleteAccountDialogProps) {
   const { colors } = useTheme();
   const count = account?.transactionCount ?? 0;

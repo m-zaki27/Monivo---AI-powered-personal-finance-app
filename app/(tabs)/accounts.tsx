@@ -82,7 +82,7 @@ export default function AccountsScreen() {
 
       {accounts.isPending ? (
         [0, 1, 2].map((i) => <AccountCardSkeleton key={i} />)
-      ) : accounts.isError ? (
+      ) : accounts.isError && !accounts.data ? (
         <ErrorState error={accounts.error} onRetry={() => accounts.refetch()} />
       ) : accounts.data.length === 0 ? (
         <EmptyState icon={Wallet} title="No accounts yet" message="Add a bank account, card or cash to start tracking." actionLabel="Add account" onAction={() => router.push('/account-form')} />

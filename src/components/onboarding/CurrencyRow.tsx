@@ -13,11 +13,7 @@ interface CurrencyRowProps {
   onSelect: (code: string) => void;
 }
 
-/**
- * memo: in a list, only the two rows whose `selected` flips re-render on each
- * tap. That's why onSelect takes the code (one stable callback for all rows)
- * instead of each row getting its own new arrow function.
- */
+/** Memoized; onSelect takes the code so one stable callback serves every row. */
 export const CurrencyRow = memo(function CurrencyRow({ currency, selected, onSelect }: CurrencyRowProps) {
   const { colors } = useTheme();
   return (

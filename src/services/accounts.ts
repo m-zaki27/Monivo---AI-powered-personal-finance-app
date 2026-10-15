@@ -5,11 +5,6 @@ import type { CategoryColor } from '@/theme/tokens';
 
 import { ApiError, unwrap } from './errors';
 
-/**
- * Accounts read from the `account_balances` view, which adds each account's
- * live balance and transaction count, worked out by the database.
- */
-
 type BalanceRow = {
   id: string | null;
   name: string | null;
@@ -24,7 +19,7 @@ type BalanceRow = {
   transaction_count: number | null;
 };
 
-// View columns are typed as nullable by the generator, but these never are.
+// View columns are typed nullable, but these never are.
 function toAccount(r: BalanceRow): AccountWithBalance {
   return {
     id: r.id!,
@@ -46,7 +41,7 @@ export async function listAccounts(): Promise<AccountWithBalance[]> {
   return rows.map(toAccount);
 }
 
-export async function getAccount(id: string): Promise<AccountWithBalance> {
+async function getAccount(id: string): Promise<AccountWithBalance> {
   const row = unwrap(await supabase.from('account_balances').select('*').eq('id', id).maybeSingle());
   if (!row) throw new ApiError("We couldn't find that account. It may have been deleted.", 404);
   return toAccount(row);
@@ -72,7 +67,7 @@ export async function createAccount(input: NewAccount): Promise<AccountWithBalan
       .select('id')
       .single(),
   );
-  // A user's first account becomes default automatically (database trigger).
+  // A DB trigger makes the first account default automatically.
   if (input.isDefault) await setDefaultAccount(row.id);
   return getAccount(row.id);
 }
@@ -90,20 +85,20 @@ export async function updateAccount(id: string, patch: AccountPatch): Promise<Ac
   return getAccount(id);
 }
 
-/** Moves the "Default" badge in one database call, so two accounts never both have it. */
+/** Single RPC so two accounts are never both default. */
 export async function setDefaultAccount(id: string): Promise<AccountWithBalance[]> {
   unwrap(await supabase.rpc('set_default_account', { p_account_id: id }));
   return listAccounts();
 }
 
-/** Deletes the account and (by cascade) its transactions. The last account can't go. */
+/** Cascades to its transactions; the last account can't be deleted. */
 export async function deleteAccount(id: string) {
   const { count } = await supabase.from('accounts').select('id', { count: 'exact', head: true });
   if ((count ?? 0) <= 1) {
     throw new ApiError('You need at least one account. Add another before deleting this one.', 409);
   }
   const rows = unwrap(await supabase.from('accounts').delete().eq('id', id).select('id'));
-  // RLS turns a forbidden delete into "0 rows" rather than an error.
+  // RLS reports a forbidden delete as 0 rows, not an error.
   if (rows.length === 0) throw new ApiError("We couldn't delete that account. Please try again.", 403);
   return { id };
 }

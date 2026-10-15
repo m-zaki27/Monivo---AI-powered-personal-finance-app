@@ -16,8 +16,7 @@ export default function VerifyScreen() {
 
   const submit = async (code: string) => {
     if (purpose === 'reset') {
-      // A correct reset code signs the user in. Flag it first, so the guards keep
-      // them here to choose a new password instead of jumping into the app.
+      // The reset code signs them in; flag it first so the guards keep them here for a new password.
       setRecovering(true);
       try {
         const { needsMfa } = await verifyReset.mutateAsync({ email, code });

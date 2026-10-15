@@ -15,7 +15,7 @@ interface CategoryPickerProps {
   error?: string;
 }
 
-/** A 3-column grid of badges. Every option is visible at once: no dropdown to open. */
+/** 3-column badge grid; every option visible at once. */
 export function CategoryPicker({ categories, type, value, onChange, error }: CategoryPickerProps) {
   const options = categories?.filter((c) => c.kind === type);
   return (

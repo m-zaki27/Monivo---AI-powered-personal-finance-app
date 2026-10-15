@@ -9,7 +9,6 @@ import { useAccountMap, useCategoryMap } from '@/hooks';
 import { AnimatedView } from '@/lib/animated';
 import { useTheme } from '@/theme';
 
-/** What we heard, then one card per transaction found in it. Each can be edited or removed. */
 export function VoiceResults({ transcript, currency }: { transcript: string; currency: string }) {
   const { colors } = useTheme();
   const { drafts, removeDraft } = useDrafts();

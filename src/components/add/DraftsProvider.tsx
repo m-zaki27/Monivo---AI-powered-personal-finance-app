@@ -16,11 +16,8 @@ interface DraftsContextValue {
 const DraftsContext = createContext<DraftsContextValue | null>(null);
 
 /**
- * Unsaved transactions shared by the add flows (manual → confirm, scan →
- * review → confirm, voice → confirm). It wraps the modals stack, so drafts
- * live exactly as long as the flow is open and vanish when it closes.
- * Passing them in URL params would mean serialising objects into strings
- * (and on web a photo URI is a multi-megabyte base64 string).
+ * Unsaved drafts shared across the add flows, scoped to the modals stack so they vanish on close.
+ * Not URL params: on web a photo URI is a multi-megabyte base64 string.
  */
 export function DraftsProvider({ children }: { children: ReactNode }) {
   const [drafts, setDrafts] = useState<Draft[]>([]);

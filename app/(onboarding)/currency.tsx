@@ -38,7 +38,6 @@ export default function CurrencyStep() {
         returnKeyType="search"
         accessibilityLabel="Search currencies"
       />
-      {/* FlatList renders only what's on screen; better than .map() for long lists. */}
       <FlatList
         data={results}
         keyExtractor={(c) => c.code}

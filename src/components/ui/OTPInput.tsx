@@ -16,11 +16,7 @@ interface OTPInputProps {
   autoFocus?: boolean;
 }
 
-/**
- * Six real inputs (not one hidden one) so each box is individually focusable.
- * Typing advances, backspace on an empty box steps back, and pasting or
- * SMS autofill distributes the digits across the boxes.
- */
+/** Six real inputs so each box is focusable; paste/SMS autofill spreads digits across boxes. */
 export function OTPInput({ value, onChange, onComplete, length = 6, error, autoFocus }: OTPInputProps) {
   const { colors, isDark } = useTheme();
   const refs = useRef<(TextInput | null)[]>([]);

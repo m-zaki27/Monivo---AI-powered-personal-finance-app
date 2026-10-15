@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import type { Transaction, TransactionSource, TransactionType } from '@/schemas/models';
 
-import { ApiError, unwrap } from './errors';
+import { unwrap } from './errors';
 import { listCategories } from './user';
 
 export interface TransactionFilters {
@@ -54,11 +54,7 @@ const toRow = (t: NewTransaction) => ({
   source: t.source,
 });
 
-/**
- * Search matches merchant, note or category name. PostgREST's `or` filter uses
- * commas and brackets as syntax, so those characters are stripped from the
- * search text first: user input must never change the shape of the query.
- */
+// Strips PostgREST filter syntax chars so user input can't alter the `or` query.
 async function searchFilter(search: string) {
   const term = search.replace(/[%_,()*\\"']/g, ' ').trim();
   if (!term) return null;
@@ -87,33 +83,16 @@ export async function listTransactions(filters: TransactionFilters = {}): Promis
   return unwrap(await query).map(toTransaction);
 }
 
-export async function getTransaction(id: string): Promise<Transaction> {
-  const row = unwrap(await supabase.from('transactions').select(COLUMNS).eq('id', id).maybeSingle());
-  if (!row) throw new ApiError("We couldn't find that transaction. It may have been deleted.", 404);
-  return toTransaction(row);
-}
-
-export async function createTransaction(input: NewTransaction): Promise<Transaction> {
-  return toTransaction(unwrap(await supabase.from('transactions').insert(toRow(input)).select(COLUMNS).single()));
-}
-
-/** Saves several at once (voice can produce more than one) in a single request. */
 export async function createTransactions(inputs: NewTransaction[]): Promise<Transaction[]> {
   return unwrap(await supabase.from('transactions').insert(inputs.map(toRow)).select(COLUMNS)).map(toTransaction);
 }
 
-export async function updateTransaction(id: string, patch: Partial<NewTransaction>): Promise<Transaction> {
-  const current = await getTransaction(id);
-  const row = toRow({ ...current, ...patch });
-  return toTransaction(unwrap(await supabase.from('transactions').update(row).eq('id', id).select(COLUMNS).single()));
-}
-
-/** Returns the removed row so the UI can offer "Undo". */
+/** Returns the removed row for undo. */
 export async function deleteTransaction(id: string): Promise<Transaction> {
   return toTransaction(unwrap(await supabase.from('transactions').delete().eq('id', id).select(COLUMNS).single()));
 }
 
-/** Undo: puts a deleted transaction back with its original id. */
+/** Re-inserts with the original id. */
 export async function restoreTransaction(t: Transaction): Promise<Transaction> {
   return toTransaction(unwrap(await supabase.from('transactions').insert({ id: t.id, ...toRow(t) }).select(COLUMNS).single()));
 }

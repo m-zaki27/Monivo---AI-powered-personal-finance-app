@@ -5,11 +5,6 @@ import type { CategoryColor } from '@/theme/tokens';
 
 import { ApiError, unwrap } from './errors';
 
-/**
- * Profile data lives in the `profiles` table (created automatically at
- * sign-up). Email comes from the auth user, two-step status from its factors.
- */
-
 async function currentUserId(): Promise<{ id: string; email: string }> {
   const { data, error } = await supabase.auth.getUser();
   if (error || !data.user) throw new ApiError('Your session ended. Please log in again.', 401);
@@ -22,7 +17,7 @@ export async function getMe(): Promise<User> {
     supabase.from('profiles').select('*').eq('id', id).single().then(unwrap),
     supabase.auth.mfa.listFactors(),
   ]);
-  // Emails ("this month", "Monday morning") use the user's own time zone; keep it current.
+  // Server-sent emails are scheduled in the user's time zone; keep it in sync.
   const deviceTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
   if (deviceTz && deviceTz !== profile.timezone) {
     void supabase.from('profiles').update({ timezone: deviceTz }).eq('id', id).then(() => undefined);
@@ -34,12 +29,12 @@ export async function getMe(): Promise<User> {
     lastName: profile.last_name,
     currency: profile.currency,
     mfaEnabled: (factors.data?.totp.length ?? 0) > 0,
+    avatarUrl: profile.avatar_url,
     notifications: { push: profile.notify_push, weeklyRecap: profile.notify_weekly_recap },
   };
 }
 
-/** Email changes need a confirmation flow, which arrives later; everything else saves here. */
-export async function updateMe(patch: Partial<Omit<User, 'id' | 'email' | 'mfaEnabled'>>): Promise<User> {
+export async function updateMe(patch: Partial<Omit<User, 'id' | 'email' | 'mfaEnabled' | 'avatarUrl'>>): Promise<User> {
   const { id } = await currentUserId();
   const update: TablesUpdate<'profiles'> = {};
   if (patch.firstName !== undefined) update.first_name = patch.firstName;
@@ -53,7 +48,7 @@ export async function updateMe(patch: Partial<Omit<User, 'id' | 'email' | 'mfaEn
   return getMe();
 }
 
-/** Categories are shared and practically never change, so one fetch per app run is enough. */
+// Categories are shared and static: fetch once per app run.
 let categoriesPromise: Promise<Category[]> | null = null;
 
 export function listCategories(): Promise<Category[]> {
@@ -67,17 +62,14 @@ export function listCategories(): Promise<Category[]> {
       kind: r.kind as TransactionType,
     }));
   })().catch((e) => {
-    // Don't cache a failure: the next call should try again.
+    // Don't cache a failure.
     categoriesPromise = null;
     throw e;
   });
   return categoriesPromise;
 }
 
-/**
- * Saves the onboarding currency and creates the user's first account with the
- * starting balance (named "Main account"; it can be renamed in Accounts).
- */
+/** Saves the currency and creates the first account if none exists. */
 export async function completeOnboarding(input: { currency: string; startingBalance: number }): Promise<User> {
   const user = await updateMe({ currency: input.currency });
   const { count } = await supabase.from('accounts').select('id', { count: 'exact', head: true });

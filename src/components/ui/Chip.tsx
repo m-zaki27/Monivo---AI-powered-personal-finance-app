@@ -30,7 +30,7 @@ export function Chip({ label, selected, onPress, icon: Icon, right, className }:
       accessibilityState={{ selected: !!selected }}
       className={cn(
         'h-10 flex-row items-center gap-2 rounded-chip border px-4',
-        selected ? 'border-cobalt bg-cobalt' : 'border-line bg-surface',
+        selected ? 'border-cobalt bg-cobalt' : 'border-glass-line bg-glass',
         className,
       )}
     >

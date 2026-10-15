@@ -1,11 +1,13 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { router } from 'expo-router';
 import { Mail, User } from 'lucide-react-native';
 import { useForm } from 'react-hook-form';
 import { View } from 'react-native';
 import { z } from 'zod';
 
 import { FormError, FormInput } from '@/components/forms';
-import { Button, Header, Input, Screen, Skeleton, useToast } from '@/components/ui';
+import { ProfilePhoto } from '@/components/profile/ProfilePhoto';
+import { Button, Header, Input, Screen, Skeleton, TextLink, useToast } from '@/components/ui';
 import { useMe, useUpdateMe } from '@/hooks';
 import { closeModal } from '@/lib/navigation';
 import type { User as UserModel } from '@/schemas/models';
@@ -56,10 +58,14 @@ function ProfileFormBody({ user }: { user: UserModel }) {
 
   return (
     <View className="gap-4">
+      <ProfilePhoto user={user} />
       <FormInput control={control} name="firstName" label="First name" leftIcon={User} autoComplete="given-name" returnKeyType="next" onSubmitEditing={() => setFocus('lastName')} />
       <FormInput control={control} name="lastName" label="Last name" leftIcon={User} autoComplete="family-name" returnKeyType="done" onSubmitEditing={submit} />
-      {/* Changing email needs its own code-confirmation flow; it arrives later. */}
-      <Input label="Email" value={user.email} leftIcon={Mail} editable={false} hint="Changing your email is coming soon." />
+      {/* Email changes go through their own screen: both inboxes must confirm with a code. */}
+      <View>
+        <Input label="Email" value={user.email} leftIcon={Mail} editable={false} />
+        <TextLink label="Change email" onPress={() => router.push('/change-email')} className="self-start" />
+      </View>
       <FormError message={update.error?.message} />
       <Button title="Save" loading={update.isPending} disabled={!formState.isDirty} onPress={submit} fullWidth className="mt-2" />
     </View>

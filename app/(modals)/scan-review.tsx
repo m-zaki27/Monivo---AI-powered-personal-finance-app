@@ -26,7 +26,7 @@ export default function ScanReviewScreen() {
 
   const run = () =>
     extract.mutate(receiptPhoto ?? 'sample', {
-      // Pre-fill the form with what the "AI" found; every field stays editable.
+      // Pre-fill with the scan result; every field stays editable.
       onSuccess: (r) => form.reset({ amount: centsToInput(r.total), merchant: r.merchant, categoryId: r.categoryId, date: r.date }),
     });
 

@@ -1,22 +1,15 @@
 import type { PostgrestError } from '@supabase/supabase-js';
 
 export class ApiError extends Error {
-  /**
-   * `field` names the form input the error belongs to (e.g. 'email'), so forms
-   * can show it under that input instead of in a generic banner.
-   */
+  /** `field`: form input to show the error under (e.g. 'email'). */
   constructor(message: string, public status = 500, public field?: string) {
     super(message);
     this.name = 'ApiError';
   }
 }
 
-/**
- * Turns a database error into something a person can act on. Postgres error
- * codes: 23514 = a CHECK rule failed, 23503 = a referenced row is missing,
- * 42501 = row-level security said no.
- */
-export function fromPostgrest(error: PostgrestError): ApiError {
+// 23514 = CHECK failed, 23503 = missing foreign key, 42501 = RLS denied.
+function fromPostgrest(error: PostgrestError): ApiError {
   if (!error.code && /fetch|network/i.test(error.message)) {
     return new ApiError("We couldn't reach Monivo. Check your connection and try again.", 0);
   }
@@ -36,10 +29,9 @@ export function fromPostgrest(error: PostgrestError): ApiError {
 }
 
 type Result = { data: unknown; error: PostgrestError | null };
-/** The data type of the success branch only (Supabase returns `{ data, error: null } | { data: null, error }`). */
 type Ok<R extends Result> = Extract<R, { error: null }>['data'];
 
-/** Unwraps a Supabase query result: return data or throw a friendly error. */
+/** Returns data or throws an ApiError. */
 export function unwrap<R extends Result>(result: R): Ok<R> {
   if (result.error) throw fromPostgrest(result.error);
   return result.data as Ok<R>;

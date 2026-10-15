@@ -4,10 +4,7 @@ import { useExportCsv } from '@/components/transactions/useExportCsv';
 import { queryKeys } from '@/hooks';
 import { transactionsApi } from '@/services';
 
-/**
- * "Export data" in Settings: every transaction, unfiltered. fetchQuery reuses
- * the cached list if it's fresh, otherwise asks the server.
- */
+/** Exports every transaction; fetchQuery reuses the cache when fresh. */
 export function useExportAll(currency: string) {
   const qc = useQueryClient();
   const { exportCsv, exporting } = useExportCsv(currency);

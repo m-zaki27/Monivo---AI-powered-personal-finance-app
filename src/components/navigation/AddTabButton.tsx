@@ -5,7 +5,6 @@ import { View } from 'react-native';
 import { PressableScale } from '@/components/ui';
 import { useTheme } from '@/theme/useTheme';
 
-/** Raised centre button: gold gradient + soft gold glow, sits above the pill. */
 export function AddTabButton({ onPress }: { onPress: () => void }) {
   const { gradients, colors } = useTheme();
   return (

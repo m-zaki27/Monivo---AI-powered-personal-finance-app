@@ -1,10 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Keyboard, Platform } from 'react-native';
 
-/**
- * True while the on-screen keyboard is up. iOS fires "will" events (so we can
- * react before it animates); Android only fires "did".
- */
+// Android only emits keyboardDid* events; iOS "will" events fire before the animation.
 export function useKeyboardVisible() {
   const [visible, setVisible] = useState(false);
   useEffect(() => {

@@ -8,7 +8,8 @@ export default function TabsLayout() {
   return (
     <Tabs
       tabBar={(props) => <TabBar {...props} />}
-      screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: colors.bg } }}
+      // 'shift': the new tab slides in while the old one fades.
+      screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: colors.bg }, animation: 'shift' }}
     >
       <Tabs.Screen name="index" />
       <Tabs.Screen name="transactions" />

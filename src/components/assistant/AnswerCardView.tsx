@@ -7,7 +7,7 @@ import type { AnswerCard } from '@/services';
 import { useTheme } from '@/theme';
 import { categoryColors } from '@/theme/tokens';
 
-/** The inline mini chart / summary under an assistant answer. Plain Views, no chart library needed at this size. */
+/** Inline mini chart / summary under an assistant answer; plain Views, no chart library. */
 export function AnswerCardView({ card, currency }: { card: AnswerCard; currency: string }) {
   if (card.kind === 'bars') return <Bars card={card} currency={currency} />;
   if (card.kind === 'budget') return <BudgetSummary card={card} currency={currency} />;

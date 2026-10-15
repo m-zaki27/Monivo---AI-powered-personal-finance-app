@@ -21,7 +21,7 @@ import { categoryColors, type CategoryColor } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
 /** Data stores an icon *name*; this maps it to a component at render time. */
-export const categoryIcons: Record<CategoryIcon, LucideIcon> = {
+const categoryIcons: Record<CategoryIcon, LucideIcon> = {
   coffee: Coffee,
   basket: ShoppingBasket,
   car: Car,

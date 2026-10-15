@@ -7,7 +7,6 @@ import { dayKey } from '@/lib/dates';
 import { shareTextFile } from '@/lib/shareFile';
 import type { Transaction } from '@/schemas/models';
 
-/** Builds a CSV of the given (already filtered) list and hands it to the share sheet. */
 export function useExportCsv(currency: string) {
   const toast = useToast();
   const categories = useCategoryMap();

@@ -24,13 +24,7 @@ const SCREEN_H = Dimensions.get('window').height;
 const DISMISS_DISTANCE = 120;
 const DISMISS_VELOCITY = 900;
 
-/**
- * Lightweight sheet: RN <Modal> for layering + Reanimated for motion + a pan
- * gesture to drag it down. Content decides the height.
- *
- * We keep the Modal mounted until the exit animation finishes (`mounted`),
- * otherwise it would vanish instantly instead of sliding away.
- */
+/** Modal-based sheet; stays mounted until the exit animation finishes so it slides away. */
 export function BottomSheet({ visible, onClose, title, subtitle, children }: BottomSheetProps) {
   const insets = useSafeAreaInsets();
   const { colors, shadow, scheme } = useTheme();
@@ -38,7 +32,7 @@ export function BottomSheet({ visible, onClose, title, subtitle, children }: Bot
   const translateY = useSharedValue(SCREEN_H);
   const backdrop = useSharedValue(0);
 
-  // Mount as soon as it's asked to show (during render, so the first frame already has the Modal).
+  // Mount during render so the first frame already has the Modal.
   if (visible && !mounted) setMounted(true);
 
   useEffect(() => {
@@ -76,8 +70,7 @@ export function BottomSheet({ visible, onClose, title, subtitle, children }: Bot
     <Modal transparent visible statusBarTranslucent navigationBarTranslucent animationType="none" onRequestClose={onClose}>
       {/* Gestures inside a Modal need their own root on Android. */}
       <GestureHandlerRootView style={{ flex: 1 }}>
-        {/* On web a Modal is portalled outside the app's DOM tree, so the theme's
-            CSS variables don't reach it. Re-applying the scope fixes bg-surface etc. */}
+        {/* On web the Modal is portalled outside the themed DOM tree, so re-apply the theme. */}
         <ThemeScope scheme={scheme} style={{ flex: 1 }}>
           <AnimatedView className="absolute inset-0 bg-scrim" style={backdropStyle}>
             <Pressable className="flex-1" onPress={onClose} accessibilityLabel="Close sheet" />

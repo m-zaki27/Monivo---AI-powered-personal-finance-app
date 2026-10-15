@@ -2,10 +2,7 @@ import { View } from 'react-native';
 
 import { palette } from '@/theme';
 
-/**
- * A drawn receipt (grey lines on white) standing in for a photo on web and
- * simulators, which have no camera. Purely decorative.
- */
+/** Stand-in for a photo on web and simulators, which have no camera. */
 export function SampleReceipt() {
   const line = (w: `${number}%`, h = 6, strong = false) => (
     <View style={{ width: w, height: h, borderRadius: 3, backgroundColor: strong ? 'rgba(14,22,48,0.55)' : 'rgba(14,22,48,0.18)' }} />

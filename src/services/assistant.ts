@@ -3,11 +3,7 @@ import type { CategoryColor } from '@/theme/tokens';
 
 import { invokeAi } from './ai';
 
-/**
- * The assistant runs on Gemini in the `ai` Edge Function. The function
- * computes every number from the user's own rows; Gemini only phrases the
- * answer and picks a card, so cards never contain invented figures.
- */
+// The Edge Function computes all figures from the user's rows; Gemini only phrases the answer.
 
 export type AnswerCard =
   | { kind: 'bars'; title: string; items: { label: string; value: number; color: CategoryColor }[] }
@@ -17,13 +13,12 @@ export type AnswerCard =
 export interface AssistantReply {
   text: string;
   card?: AnswerCard;
-  /** Suggested next questions */
   followUps?: string[];
 }
 
 export interface AskInput {
   question: string;
-  /** Recent turns, so follow-ups like "and last month?" make sense */
+  /** Context for follow-ups like "and last month?" */
   history?: { role: 'user' | 'assistant'; text: string }[];
 }
 
@@ -32,13 +27,13 @@ export const starterPrompts = ['How much did I spend on food?', 'Am I on budget?
 export function ask({ question, history = [] }: AskInput): Promise<AssistantReply> {
   const now = new Date();
   const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  // The same day-of-month last month (capped at that month's length), for fair comparisons.
+  // Same day last month (clamped), for like-for-like comparisons.
   const prevSamePoint = new Date(prev.getFullYear(), prev.getMonth(), Math.min(now.getDate(), daysInMonth(prev)), 23, 59, 59);
   return invokeAi<AssistantReply>({
     action: 'assistant',
     question,
     history: history.slice(-6),
-    // Local month boundaries, so "this month" matches the user's calendar.
+    // Local-time month boundaries, not UTC.
     monthFrom: startOfMonth(now).toISOString(),
     prevMonthFrom: prev.toISOString(),
     prevSamePoint: prevSamePoint.toISOString(),

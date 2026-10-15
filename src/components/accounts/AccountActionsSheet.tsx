@@ -17,8 +17,7 @@ interface AccountActionsSheetProps {
 
 export function AccountActionsSheet({ account, onClose, onSetDefault, onEdit, onDelete }: AccountActionsSheetProps) {
   const { colors } = useTheme();
-  // Remember the last account so the sheet keeps its content while it slides away.
-  // (Updating state during render is React's pattern for "remember a previous prop".)
+  // Keep the last account so the sheet keeps its content while it slides away.
   const [last, setLast] = useState(account);
   if (account && account !== last) setLast(account);
   const shown = account ?? last;

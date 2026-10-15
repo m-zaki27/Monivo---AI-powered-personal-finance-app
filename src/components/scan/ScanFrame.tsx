@@ -5,7 +5,6 @@ import { palette } from '@/theme';
 const ARM = 36;
 const THICK = 4;
 
-/** Four rounded L-shaped corners marking where the receipt should go. */
 export function ScanFrame({ color = palette.gold }: { color?: string }) {
   const corner = (pos: ViewStyle, borders: ViewStyle) => (
     <View

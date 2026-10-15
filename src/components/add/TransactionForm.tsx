@@ -19,13 +19,12 @@ interface TransactionFormProps {
   currency: string;
 }
 
-/** Every field of a transaction. Used for new manual entries and for editing any draft. */
+/** Transaction fields, for new manual entries and editing drafts. */
 export function TransactionForm({ form, currency }: TransactionFormProps) {
   const { colors, palette } = useTheme();
   const categories = useCategories();
   const accounts = useAccounts();
   const { control, setValue, getValues, watch } = form;
-  // watch() re-renders this component when `type` changes (to recolour and refilter).
   const type = watch('type');
 
   const changeType = (t: TransactionType) => {

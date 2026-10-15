@@ -8,11 +8,7 @@ import { useTheme } from '@/theme';
 
 import { SettingsRow, SettingsSection } from './SettingsRow';
 
-/**
- * Turning MFA on can't be a plain switch: it needs the setup flow (QR + code).
- * So the switch opens that flow, and the account only shows "on" once the
- * code is verified. Turning it off asks first, because it lowers security.
- */
+/** The MFA switch opens the setup flow and shows "on" only once verified; turning off confirms first. */
 export function SecuritySection({ enabled }: { enabled: boolean }) {
   const { colors } = useTheme();
   const toast = useToast();

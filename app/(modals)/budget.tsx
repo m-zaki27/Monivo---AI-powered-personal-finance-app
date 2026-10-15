@@ -25,7 +25,7 @@ export default function BudgetScreen() {
           <Skeleton height={96} rounded="rounded-card" />
           <Skeleton height={44} />
         </View>
-      ) : budget.isError ? (
+      ) : budget.isError && !budget.data ? (
         <ErrorState error={budget.error} onRetry={() => budget.refetch()} />
       ) : (
         <BudgetForm budget={budget.data} />
@@ -34,10 +34,7 @@ export default function BudgetScreen() {
   );
 }
 
-/**
- * Split out so useForm starts with the loaded values (defaultValues are only
- * read once). `budget` is null for someone who hasn't set one yet.
- */
+/** Split out so useForm starts with loaded values (defaultValues are read once). */
 function BudgetForm({ budget }: { budget: Budget | null }) {
   const currency = useCurrency();
   const summary = useMonthSummary();

@@ -15,12 +15,11 @@ import { SampleReceipt } from './SampleReceipt';
 interface ReceiptReviewFieldsProps {
   form: UseFormReturn<ReceiptReviewValues>;
   photo: string | null;
-  /** 0–1 from the extractor */
+  /** 0–1 */
   confidence: number;
   currency: string;
 }
 
-/** What the extractor found, as editable fields. Low confidence gets an amber "double-check" note. */
 export function ReceiptReviewFields({ form, photo, confidence, currency }: ReceiptReviewFieldsProps) {
   const { colors } = useTheme();
   const categories = useCategories();

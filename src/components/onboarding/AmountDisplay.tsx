@@ -3,22 +3,19 @@ import { View } from 'react-native';
 import { Text } from '@/components/ui';
 
 interface AmountDisplayProps {
-  /** Raw typed string from the keypad, e.g. "1250.5" */
+  /** Raw keypad string, e.g. "1250.5" */
   value: string;
   symbol: string;
 }
 
-/** "1250.5" → "1,250.5" — groups the whole part, keeps what was typed after the dot. */
+/** "1250.5" → "1,250.5"; keeps what was typed after the dot. */
 function groupDigits(value: string) {
   const [whole = '', frac] = value.split('.');
   const grouped = (whole || '0').replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   return frac === undefined ? grouped : `${grouped}.${frac}`;
 }
 
-/**
- * Steps the size down as the number grows so it always fits on one line.
- * (RN's adjustsFontSizeToFit would do this, but it's iOS-only.)
- */
+/** Manual font stepping: RN's adjustsFontSizeToFit is iOS-only. */
 function sizeFor(text: string): number {
   const n = text.length;
   if (n <= 6) return 64;
@@ -28,7 +25,6 @@ function sizeFor(text: string): number {
   return 34;
 }
 
-/** The huge number on the starting-balance step. */
 export function AmountDisplay({ value, symbol }: AmountDisplayProps) {
   const empty = value === '';
   const text = groupDigits(value);

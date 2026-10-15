@@ -1,4 +1,4 @@
-/** "#2F6BFF" + 0.15 → "rgba(47,107,255,0.15)" — used for tinted badges and glows. */
+/** "#2F6BFF" + 0.15 → "rgba(47,107,255,0.15)" */
 export function withAlpha(hex: string, alpha: number): string {
   const h = hex.replace('#', '');
   const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;

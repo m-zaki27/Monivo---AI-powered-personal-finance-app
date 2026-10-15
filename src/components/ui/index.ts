@@ -23,3 +23,5 @@ export * from './Switch';
 export * from './Text';
 export * from './TextLink';
 export * from './Toast';
+export * from './Ambient';
+export * from './Avatar';

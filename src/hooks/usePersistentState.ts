@@ -1,10 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCallback, useEffect, useState } from 'react';
 
-/**
- * useState that survives restarts — for small UI preferences only (like
- * "hide my balance"). Real user data belongs on the server, behind a service.
- */
+/** Persisted useState for small, non-sensitive UI preferences only. */
 export function usePersistentState<T>(key: string, initial: T) {
   const [value, setValue] = useState<T>(initial);
 

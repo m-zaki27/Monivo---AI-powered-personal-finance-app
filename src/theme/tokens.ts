@@ -1,8 +1,4 @@
-/**
- * Monivo design tokens — the single source of truth for every visual value.
- * tailwind.config.js imports this file, and useTheme() exposes it to JS
- * (SVG, charts, gradients) where class names can't reach.
- */
+// Single source of design tokens: imported by tailwind.config.js and exposed via useTheme().
 
 export const palette = {
   midnight: '#0B1020',
@@ -34,12 +30,15 @@ export interface ThemeColors {
   muted: string;
   /** Overlay behind sheets/dialogs */
   scrim: string;
-  /** Tab bar fill (used on top of / instead of blur) */
+  /** Tab bar fill (over or instead of blur) */
   tabBar: string;
-  /** Primary-coloured logo mark (gold on dark, navy on light) */
   logo: string;
-  /** Shadow tint */
   shadow: string;
+  /** Translucent card fill */
+  glass: string;
+  glassBorder: string;
+  /** Background glow opacities: primary, secondary, income */
+  ambient: readonly [number, number, number];
 }
 
 export const themes: Record<ColorSchemeName, ThemeColors> = {
@@ -54,6 +53,9 @@ export const themes: Record<ColorSchemeName, ThemeColors> = {
     tabBar: 'rgba(19,26,46,0.78)',
     logo: palette.gold,
     shadow: 'rgba(0,4,16,0.55)',
+    glass: 'rgba(255,255,255,0.07)',
+    glassBorder: 'rgba(255,255,255,0.14)',
+    ambient: [0.5, 0.45, 0.35],
   },
   light: {
     bg: palette.ivory,
@@ -66,10 +68,13 @@ export const themes: Record<ColorSchemeName, ThemeColors> = {
     tabBar: 'rgba(255,255,255,0.82)',
     logo: palette.navy,
     shadow: 'rgba(47,60,110,0.14)',
+    glass: 'rgba(255,255,255,0.55)',
+    glassBorder: 'rgba(255,255,255,0.85)',
+    ambient: [0.45, 0.32, 0.3],
   },
 };
 
-/** Accents are the same in both themes. */
+/** Same in both themes. */
 export const accents = {
   primary: palette.gold,
   onPrimary: palette.midnight,
@@ -86,10 +91,6 @@ export const gradients = {
   goldGlow: 'rgba(245,184,61,0.45)',
 } as const;
 
-/**
- * Category colours. Chosen from the brand hues plus a few neighbours
- * (pink, teal, orange, tan) — no purple, violet, emerald, slate or coral.
- */
 export const categoryColors = {
   cobalt: palette.cobalt,
   sky: palette.sky,
@@ -103,17 +104,6 @@ export const categoryColors = {
   steel: '#6F8CC9',
 } as const;
 export type CategoryColor = keyof typeof categoryColors;
-
-/** 8px grid. Half-step (4) is allowed for tight icon/text gaps only. */
-export const spacing = {
-  half: 4,
-  xs: 8,
-  sm: 16,
-  md: 24,
-  lg: 32,
-  xl: 40,
-  xxl: 48,
-} as const;
 
 export const radius = {
   sm: 12,
@@ -151,7 +141,7 @@ export const typeScale = {
 } as const;
 
 export const shadows = {
-  /** Uses RN's cross-platform boxShadow so the tint shows on Android too. */
+  /** boxShadow strings, so the tint also renders on Android. */
   card: (tint: string) => `0px 8px 24px ${tint}`,
   raised: (tint: string) => `0px 12px 32px ${tint}`,
   glow: (tint: string) => `0px 6px 20px ${tint}`,
@@ -164,5 +154,3 @@ export const motion = {
   slow: 400,
   spring: { damping: 18, stiffness: 220, mass: 0.9 },
 } as const;
-
-export const hitSlop = 44;

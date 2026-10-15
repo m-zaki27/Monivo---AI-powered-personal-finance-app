@@ -3,15 +3,8 @@ import { useCallback, useState } from 'react';
 import { RefreshControl, View } from 'react-native';
 import { FadeInDown } from 'react-native-reanimated';
 
-import {
-  BalanceCard,
-  BudgetCard,
-  HomeHeader,
-  MonthChips,
-  QuickActions,
-  RecentTransactions,
-  SpendingCard,
-} from '@/components/home';
+import { HomeHero, MonthOverview, QuickActions, RecentTransactions } from '@/components/home';
+
 import { ErrorState, Screen } from '@/components/ui';
 import { queryKeys, useAccounts, useCurrency, useMe, useMonthSummary, usePersistentState, useRecentTransactions } from '@/hooks';
 import { AnimatedView } from '@/lib/animated';
@@ -21,10 +14,7 @@ import { useTheme } from '@/theme';
 /** Staggered fade-up as the dashboard first appears. */
 const enter = (i: number) => FadeInDown.duration(400).delay(i * 60);
 
-/**
- * Each section gets its own query and its own loading/error state, so one slow
- * or failed request never blanks the whole dashboard.
- */
+/** Per-section queries, so one slow or failed request never blanks the dashboard. */
 export default function HomeScreen() {
   const { colors } = useTheme();
   const qc = useQueryClient();
@@ -49,59 +39,47 @@ export default function HomeScreen() {
   }, [qc]);
 
   const total = accounts.data ? sumCents(accounts.data.map((a) => a.balance)) : undefined;
-  const net = summary.data ? summary.data.income - summary.data.expense : undefined;
 
   return (
     <Screen
       scroll
       withTabBar
-      contentClassName="gap-4"
+      contentClassName="gap-9"
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.secondary} colors={[colors.secondary]} />}
     >
-      <HomeHeader user={me.data} />
-
-      <AnimatedView entering={enter(0)}>
-        {accounts.isError ? (
-          <ErrorState error={accounts.error} onRetry={() => accounts.refetch()} />
-        ) : (
-          <BalanceCard
-            total={total}
-            accountCount={accounts.data?.length}
-            net={net}
-            currency={currency}
-            hidden={hidden}
-            onToggleHidden={() => setHidden(!hidden)}
-            loading={accounts.isPending}
-          />
-        )}
+      <AnimatedView entering={enter(0)} className="pt-10">
+        <HomeHero
+          user={me.data}
+          total={total}
+          accountCount={accounts.data?.length}
+          income={summary.data?.income}
+          expense={summary.data?.expense}
+          currency={currency}
+          hidden={hidden}
+          onToggleHidden={() => setHidden(!hidden)}
+        />
       </AnimatedView>
+
+      {accounts.isError && !accounts.data && <ErrorState compact error={accounts.error} onRetry={() => accounts.refetch()} />}
 
       <AnimatedView entering={enter(1)}>
         <QuickActions />
       </AnimatedView>
 
       <AnimatedView entering={enter(2)}>
-        <MonthChips income={summary.data?.income} expense={summary.data?.expense} currency={currency} hidden={hidden} />
-      </AnimatedView>
-
-      <AnimatedView entering={enter(3)}>
-        <BudgetCard
+        <MonthOverview
           summary={summary.data}
-          error={summary.isError ? summary.error : undefined}
+          error={summary.isError && !summary.data ? summary.error : undefined}
           onRetry={() => summary.refetch()}
           currency={currency}
           hidden={hidden}
         />
       </AnimatedView>
 
-      <AnimatedView entering={enter(4)}>
-        <SpendingCard summary={summary.data} error={summary.isError ? summary.error : undefined} onRetry={() => summary.refetch()} currency={currency} />
-      </AnimatedView>
-
-      <AnimatedView entering={enter(5)}>
+      <AnimatedView entering={enter(3)}>
         <RecentTransactions
           transactions={recent.data}
-          error={recent.isError ? recent.error : undefined}
+          error={recent.isError && !recent.data ? recent.error : undefined}
           onRetry={() => recent.refetch()}
           currency={currency}
         />

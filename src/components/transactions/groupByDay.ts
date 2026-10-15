@@ -4,12 +4,11 @@ import type { Transaction } from '@/schemas/models';
 export interface DaySection {
   key: string;
   title: string;
-  /** Income minus expense for the day */
   net: number;
   data: Transaction[];
 }
 
-/** Turns a date-sorted list into SectionList sections ("Today", "Yesterday", "Mon, Oct 6"…). */
+/** Expects a date-sorted list. */
 export function groupByDay(transactions: Transaction[], now = new Date()): DaySection[] {
   const sections: DaySection[] = [];
   let current: DaySection | undefined;

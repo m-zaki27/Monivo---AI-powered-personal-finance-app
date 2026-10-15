@@ -6,10 +6,7 @@ import { useDeleteMyAccount } from '@/hooks';
 
 import { SettingsRow } from './SettingsRow';
 
-/**
- * Both app stores require an in-app way to delete your account. After it
- * succeeds the session is gone, so the route guards return to Welcome.
- */
+/** Required by both app stores; afterwards the route guards return to Welcome. */
 export function DeleteAccountRow() {
   const toast = useToast();
   const remove = useDeleteMyAccount();
